@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "282333194999",
+    "project_id": "cookbook-343c0",
+    "storage_bucket": "cookbook-343c0.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:282333194999:android:2ee5e50ad5f1daf8ea81f2",
+        "android_client_info": {
+          "package_name": "com.example.firechat"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "282333194999-d88a15e9k2u1u8j6q044gng41svh1og0.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAgQS4hvA-7APZBdgMah2GeKZzESS-TTI0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "282333194999-d88a15e9k2u1u8j6q044gng41svh1og0.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

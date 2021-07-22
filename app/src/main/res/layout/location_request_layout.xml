@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/clRequestLoc"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <LinearLayout
+        android:id="@+id/llRequstSent"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:layout_marginEnd="8dp"
+        android:background="@drawable/sent_loc_request_bg"
+        android:orientation="horizontal"
+        android:padding="10dp"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:visibility="visible">
+
+        <TextView
+            android:id="@+id/tvSentMsgValidTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/timer_bg"
+            android:padding="6dp"
+            android:text="@string/_10"
+            android:textColor="@android:color/white" />
+
+        <TextView
+            android:id="@+id/tvSentMessage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="12dp"
+            android:text="@string/location_request_sent"
+            android:textColor="@android:color/white"
+            android:textSize="16sp" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btnCancelReq"
+            style="@style/Widget.AppCompat.Button.Borderless"
+            android:layout_width="68dp"
+            android:layout_height="32dp"
+            android:layout_gravity="center"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/neg_button_bg"
+            android:gravity="center"
+            android:padding="2dp"
+            android:text="@string/cancel"
+            android:textAllCaps="false"
+            android:textColor="@color/white" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/llRequestReceived"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="4dp"
+        android:background="@drawable/sent_loc_request_bg"
+        android:orientation="horizontal"
+        android:padding="10dp"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/llRequstSent"
+        tools:visibility="visible">
+
+        <TextView
+            android:id="@+id/tvReceivedMessage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="12dp"
+            android:text="@string/location_request"
+            android:textColor="@android:color/white"
+            android:textSize="16sp" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btnAcceptReq"
+            style="@style/Widget.AppCompat.Button.Borderless"
+            android:layout_width="68dp"
+            android:layout_height="32dp"
+            android:layout_gravity="center"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/positive_button_bg"
+            android:gravity="center"
+            android:padding="2dp"
+            android:text="@string/accept"
+            android:textAllCaps="false"
+            android:textColor="@color/white" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btnRejectReq"
+            style="@style/Widget.AppCompat.Button.Borderless"
+            android:layout_width="68dp"
+            android:layout_height="32dp"
+            android:layout_gravity="center"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/neg_button_bg"
+            android:gravity="center"
+            android:padding="2dp"
+            android:text="@string/reject"
+            android:textAllCaps="false"
+            android:textColor="@color/white" />
+
+        <TextView
+            android:id="@+id/tvReceivedMsgValidTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/timer_bg"
+            android:padding="6dp"
+            android:text="@string/_10"
+            android:textColor="@android:color/white" />
+    </LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

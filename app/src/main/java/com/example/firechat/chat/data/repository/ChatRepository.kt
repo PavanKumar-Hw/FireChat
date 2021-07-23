@@ -3,6 +3,7 @@ package com.example.firechat.chat.data.repository
 import com.example.firechat.chat.data.models.MessageModel
 import com.example.firechat.common.FirebaseReferenceChildObserver
 import com.example.firechat.common.Result
+import java.util.HashMap
 
 interface ChatRepository {
     fun loadMessagesAdded(
@@ -11,6 +12,8 @@ interface ChatRepository {
         b: ((Result<MessageModel>) -> Unit)
     )
 
-    fun <T> createUsersChat(chatId: String, b: (Result<T>) -> Unit)
-    fun <T> createReceiverChat(chatId: String, b: (Result<T>) -> Unit)
+    fun sendMessage(
+        messageUserMap: HashMap<String, Any>,
+        b: ((String?) -> Unit)
+    )
 }

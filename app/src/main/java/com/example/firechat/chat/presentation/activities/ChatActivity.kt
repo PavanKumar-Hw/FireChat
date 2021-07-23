@@ -1,6 +1,5 @@
 package com.example.firechat.chat.presentation.activities
 
-import android.Manifest
 import android.content.Context
 import android.location.Location
 import android.os.Bundle
@@ -19,50 +18,32 @@ import com.example.firechat.R
 import com.example.firechat.chat.data.models.MessageModel
 import com.example.firechat.chat.presentation.adapters.MessagesAdapter
 import com.example.firechat.chat.presentation.viewmodels.ChatViewModel
-import com.example.firechat.common.Constants
+import com.example.firechat.common.*
 import com.example.firechat.common.Constants.Companion.STATUS_OFFLINE
 import com.example.firechat.common.Constants.Companion.STATUS_ONLINE
 import com.example.firechat.common.Constants.Companion.STATUS_TYPING
 import com.example.firechat.common.Constants.Companion.currentUserId
-import com.example.firechat.common.Extras
-import com.example.firechat.common.Util
-import com.example.firechat.common.wrapSnapshotToClass
 import com.example.firechat.databinding.ActivityChatBinding
 import com.example.firechat.databinding.CustomActionBarBinding
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.firebase.database.*
-import com.google.firebase.database.DatabaseReference.CompletionListener
-import com.karumi.dexter.Dexter
-import com.karumi.dexter.MultiplePermissionsReport
-import com.karumi.dexter.PermissionToken
-import com.karumi.dexter.listener.PermissionRequest
-import com.karumi.dexter.listener.multi.MultiplePermissionsListener
+import dagger.hilt.android.AndroidEntryPoint
 import java.util.*
 import kotlin.collections.ArrayList
 
+@AndroidEntryPoint
 class ChatActivity : AppCompatActivity(), View.OnClickListener {
 
     private lateinit var binding: ActivityChatBinding
-    private lateinit var databaseReferenceMessages: DatabaseReference
-    private lateinit var childEventListener: ChildEventListener
     private lateinit var mRootRef: DatabaseReference
     private lateinit var chatUserId: String
     private lateinit var userName: String
-    private lateinit var messagesList: ArrayList<MessageModel>
     private lateinit var messagesAdapter: MessagesAdapter
     private lateinit var listAdapterObserver: RecyclerView.AdapterDataObserver
-    private var currentPage = 1
-    private val RECORD_PER_PAGE = 30
-    private lateinit var database: DatabaseReference
-    private lateinit var chatDatabase: DatabaseReference
     private lateinit var toolBarBinding: CustomActionBarBinding
-    private lateinit var query: Query
-    private lateinit var chatQuery: Query
-    private lateinit var valueListener: ValueEventListener
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
     private var lastKnownLocation: Location? = null
-    private lateinit var chatValueListener: ValueEventListener
     private val viewModel: ChatViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -86,88 +67,14 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener {
         if (intent.hasExtra(Extras.USER_KEY)) {
             intent.getStringExtra(Extras.USER_KEY)?.let {
                 chatUserId = it
+                viewModel.chatUserId = it
             }
         }
 
-        checkUserExists()
         initViews()
         fusedLocationProviderClient =
             LocationServices.getFusedLocationProviderClient(this)
         Constants.IsLocPermissionGranted = Util.checkLocationPermission(this)
-    }
-
-    private fun checkUserExists() {
-        database =
-            FirebaseDatabase.getInstance().reference.child(NodeNames.CHATS).child(currentUserId)
-                .child(chatUserId)
-        chatDatabase =
-            FirebaseDatabase.getInstance().reference.child(NodeNames.CHATS).child(chatUserId)
-                .child(currentUserId)
-        query = database.orderByKey()
-        chatQuery = chatDatabase.orderByKey()
-        addUserValueListeners()
-        query.addListenerForSingleValueEvent(valueListener)
-
-    }
-
-    private fun addUserValueListeners() {
-        chatValueListener = object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                if (!snapshot.exists()) {
-                    createChatReceiver()
-                }
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                Toast.makeText(
-                    this@ChatActivity,
-                    "Could not fetch data ${error.message}",
-                    Toast.LENGTH_LONG
-                ).show()
-            }
-        }
-        valueListener = object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                if (!snapshot.exists()) {
-                    createChat()
-                    Toast.makeText(this@ChatActivity, "Chat not Available", Toast.LENGTH_LONG)
-                        .show()
-                } else {
-                    chatQuery.addListenerForSingleValueEvent(chatValueListener)
-                }
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                Toast.makeText(
-                    this@ChatActivity,
-                    "Could not fetch data ${error.message}",
-                    Toast.LENGTH_LONG
-                ).show()
-            }
-
-        }
-    }
-
-    private fun createChat() {
-        val databaseReferenceChats = FirebaseDatabase.getInstance().reference.child(NodeNames.CHATS)
-        databaseReferenceChats.child(currentUserId).child(chatUserId)
-            .child(NodeNames.TIME_STAMP).setValue(ServerValue.TIMESTAMP)
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    createChatReceiver()
-                }
-            }
-    }
-
-    private fun createChatReceiver() {
-        val databaseReferenceChats = FirebaseDatabase.getInstance().reference.child(NodeNames.CHATS)
-        databaseReferenceChats.child(chatUserId).child(currentUserId)
-            .child(NodeNames.TIME_STAMP).setValue(ServerValue.TIMESTAMP)
-            .addOnCompleteListener {
-                if (it.isSuccessful) {
-                    Toast.makeText(this, "Chat created", Toast.LENGTH_LONG).show()
-                }
-            }
     }
 
     private fun initViews() {
@@ -175,6 +82,7 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener {
         binding.ivSend.setOnClickListener(this)
         binding.ivLocation.setOnClickListener(this)
 
+        observerClearMessage()
         mRootRef = FirebaseDatabase.getInstance().reference
 
         if (intent.hasExtra(Extras.USER_NAME)) {
@@ -188,12 +96,7 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener {
             }
         }
 
-        messagesList = ArrayList()
-        messagesAdapter = MessagesAdapter(this, messagesList)
-
-        binding.rvMessages.layoutManager = LinearLayoutManager(this)
-        binding.rvMessages.adapter = messagesAdapter
-
+        initRecyclerView()
         loadMessages()
 
         messagesAdapter.addAcceptListener { messageModel, i ->
@@ -203,7 +106,7 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener {
                 Toast.LENGTH_LONG
             ).show()
             if (Util.connectionAvailable(this)) {
-                sendLocCheckPermission(this, messageModel)
+                checkPermission(this, Constants.ACCEPT_LOC_REQ, messageModel)
             }
         }
         messagesAdapter.addRejectListener { messageModel, i ->
@@ -217,28 +120,20 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener {
             ).show()
         }
 
-        mRootRef.child(NodeNames.CHATS).child(currentUserId).child(chatUserId)
-            .child(NodeNames.UNREAD_COUNT).setValue(0)
-
-        binding.rvMessages.scrollToPosition(messagesList.size - 1)
-
-        binding.srlMessages.setOnRefreshListener {
-            currentPage++
-            loadMessages()
-        }
-
-        if (intent.hasExtra(Extras.MESSAGE) && intent.hasExtra(Extras.MESSAGE_ID) &&
+        if (intent.hasExtra(Extras.MESSAGE) &&
+            intent.hasExtra(Extras.MESSAGE_ID) &&
             intent.hasExtra(Extras.MESSAGE_TYPE)
         ) {
             val message = intent.getStringExtra(Extras.MESSAGE)
             val messageId = intent.getStringExtra(Extras.MESSAGE_ID)
             val messageType = intent.getStringExtra(Extras.MESSAGE_TYPE)
-            val messageRef: DatabaseReference =
-                mRootRef.child(NodeNames.MESSAGES).child(currentUserId).child(chatUserId).push()
-            val newMessageId = messageRef.key
+
             if (messageType == Constants.MESSAGE_TYPE_TEXT) {
                 message?.let {
-                    sendMessage(it, messageType, newMessageId, true, lastKnownLocation)
+                    viewModel.createMessageBody(
+                        it, messageType, false, lastKnownLocation,
+                        this, false, null
+                    )
                 }
             }
         }
@@ -287,197 +182,53 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener {
         })
     }
 
-    private fun acceptHalfwayRequest(
-        messageModel: MessageModel, msgType: String, pushId: String?, location: Location?
-    ) {
-        val currentUserRef = NodeNames.MESSAGES + "/" + currentUserId + "/" + chatUserId
-        val chatUserRef = NodeNames.MESSAGES + "/" + chatUserId + "/" + currentUserId
-        val messageMap: HashMap<String, Any?> = HashMap<String, Any?>()
-        messageMap[NodeNames.MESSAGE_ID] = pushId
-        messageMap[NodeNames.MESSAGE] = ""
-        messageMap[NodeNames.MESSAGE_TYPE] = msgType
-        messageMap[NodeNames.MESSAGE_FROM] = currentUserId
-        messageMap[NodeNames.MESSAGE_TO] = chatUserId
-        val locationMap: HashMap<String, Any?> = HashMap<String, Any?>()
-        locationMap[NodeNames.LOCATION_CURRENT] = messageModel.location?.requestingUserLoc
-        locationMap[NodeNames.LOCATION_CHAT] =
-            location?.latitude?.plus(0.2).toString() + "[$]" + location?.longitude?.plus(0.2)
-                .toString()
-        messageMap[NodeNames.LOCATION] = locationMap
-        messageMap[NodeNames.MESSAGE_TIME] = ServerValue.TIMESTAMP
-        val messageUserMap: HashMap<String, Any> = HashMap<String, Any>()
-        messageUserMap["$currentUserRef/$pushId"] = messageMap
-        messageUserMap["$chatUserRef/$pushId"] = messageMap
-        binding.etMessage.setText("")
-        prepareNotification(messageUserMap, msgType, "")
-    }
-
-    private fun sendCurrentLocation(pushId: String?, messageModel: MessageModel) {
-        try {
-            if (Constants.IsLocPermissionGranted) {
-                val locationResult = fusedLocationProviderClient.lastLocation
-                locationResult.addOnCompleteListener(this) { task ->
-                    if (task.isSuccessful) {
-                        lastKnownLocation = task.result
-                        acceptHalfwayRequest(
-                            messageModel,
-                            Constants.MESSAGE_TYPE_LOC,
-                            pushId,
-                            lastKnownLocation
-                        )
-                    } else {
-                        Toast.makeText(this, "Could not send location", Toast.LENGTH_LONG).show()
-                    }
-                }
+    private fun observerClearMessage() {
+        viewModel.clearText.observe(this) {
+            if (it) {
+                binding.etMessage.setText("")
             }
-        } catch (e: SecurityException) {
-            Log.e("Exception: %s", e.message, e)
         }
     }
 
-    private fun sendMessage(
-        msg: String,
-        msgType: String,
-        pushId: String?,
-        isLocation: Boolean,
-        lastKnownLocation: Location?
-    ) {
-        try {
-            val currentUserRef = NodeNames.MESSAGES + "/" + currentUserId + "/" + chatUserId
-            val chatUserRef = NodeNames.MESSAGES + "/" + chatUserId + "/" + currentUserId
-            if (msg != "") {
-                val messageMap: HashMap<String, Any?> = HashMap<String, Any?>()
-                messageMap[NodeNames.MESSAGE_ID] = pushId
-                messageMap[NodeNames.MESSAGE] = msg
-                messageMap[NodeNames.MESSAGE_TYPE] = msgType
-                messageMap[NodeNames.MESSAGE_FROM] = currentUserId
-                messageMap[NodeNames.MESSAGE_TO] = chatUserId
-                messageMap[NodeNames.MESSAGE_TIME] = ServerValue.TIMESTAMP
-                val messageUserMap: HashMap<String, Any> = HashMap<String, Any>()
-                messageUserMap["$currentUserRef/$pushId"] = messageMap
-                messageUserMap["$chatUserRef/$pushId"] = messageMap
-                binding.etMessage.setText("")
-                prepareNotification(messageUserMap, msgType, msg)
-            } else if (isLocation) {
-                val messageMap: HashMap<String, Any?> = HashMap<String, Any?>()
-                messageMap[NodeNames.MESSAGE_ID] = pushId
-                messageMap[NodeNames.MESSAGE] = msg
-                messageMap[NodeNames.MESSAGE_TYPE] = msgType
-                messageMap[NodeNames.MESSAGE_FROM] = currentUserId
-                messageMap[NodeNames.MESSAGE_TO] = chatUserId
-                val locationMap: HashMap<String, Any?> = HashMap<String, Any?>()
-                locationMap[NodeNames.LOCATION_CURRENT] =
-                    lastKnownLocation?.latitude.toString() + "[$]" + lastKnownLocation?.longitude.toString()
-                locationMap[NodeNames.LOCATION_CHAT] = ""
-                messageMap[NodeNames.LOCATION] = locationMap
-                val requestOptions: HashMap<String, Any?> = HashMap<String, Any?>()
-                requestOptions[NodeNames.REQ_STATUS] = ""
-                requestOptions[NodeNames.REQ_EXPIRY] = ""
-                messageMap[NodeNames.REQ_OPTIONS] = requestOptions
-                messageMap[NodeNames.MESSAGE_TIME] = ServerValue.TIMESTAMP
-                val messageUserMap: HashMap<String, Any> = HashMap<String, Any>()
-                messageUserMap["$currentUserRef/$pushId"] = messageMap
-                messageUserMap["$chatUserRef/$pushId"] = messageMap
-                binding.etMessage.setText("")
-                prepareNotification(messageUserMap, msgType, msg)
-            }
-        } catch (ex: Exception) {
-            Toast.makeText(
-                this@ChatActivity,
-                getString(R.string.failed_to_send_message, ex.message),
-                Toast.LENGTH_SHORT
-            ).show()
-        }
-    }
-
-    private fun prepareNotification(
-        messageUserMap: HashMap<String, Any>,
-        msgType: String,
-        msg: String
-    ) {
-        mRootRef.updateChildren(messageUserMap, object : CompletionListener {
-            override fun onComplete(
-                databaseError: DatabaseError?,
-                databaseReference: DatabaseReference
-            ) {
-                if (databaseError != null) {
-                    Toast.makeText(
-                        this@ChatActivity,
-                        getString(R.string.failed_to_send_message, databaseError.message),
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-                run {
-                    Toast.makeText(
-                        this@ChatActivity, R.string.message_sent_successfully,
-                        Toast.LENGTH_SHORT
-                    ).show()
-                    val title = when (msgType) {
-                        Constants.MESSAGE_TYPE_TEXT -> "New Message"
-                        Constants.MESSAGE_TYPE_IMAGE -> "New Image"
-                        Constants.MESSAGE_TYPE_VIDEO -> "New Video"
-                        Constants.MESSAGE_TYPE_LOC -> "Location"
-                        Constants.MESSAGE_TYPE_LOC_REQ -> "Location Request"
-                        else -> ""
-                    }
-                    Util.sendNotification(this@ChatActivity, title, msg, chatUserId)
-                    val lastMessage = if (title != "New Message") title else msg
-                    Util.updateChatDetails(
-                        this@ChatActivity, currentUserId, chatUserId, lastMessage
-                    )
-                }
+    private fun initRecyclerView() {
+        listAdapterObserver = (object : RecyclerView.AdapterDataObserver() {
+            override fun onItemRangeInserted(positionStart: Int, itemCount: Int) {
+                binding.rvMessages.scrollToPosition(positionStart)
             }
         })
+        messagesAdapter = MessagesAdapter(this)
+
+        binding.rvMessages.layoutManager = LinearLayoutManager(this)
+        messagesAdapter.registerAdapterDataObserver(listAdapterObserver)
+        binding.rvMessages.adapter = messagesAdapter
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        messagesAdapter.unregisterAdapterDataObserver(listAdapterObserver)
     }
 
     private fun loadMessages() {
-        messagesList.clear()
-        databaseReferenceMessages =
-            mRootRef.child(NodeNames.MESSAGES).child(currentUserId).child(chatUserId)
+        val messagesPath = NodeNames.MESSAGES + "/" + currentUserId + "/" + chatUserId
+        viewModel.loadMessages(messagesPath)
+        observeMessages()
+    }
 
-        val messageQuery =
-            databaseReferenceMessages.limitToLast(currentPage * RECORD_PER_PAGE)
-
-        if (this::childEventListener.isInitialized)
-            messageQuery.removeEventListener(childEventListener)
-
-        childEventListener = object : ChildEventListener {
-            override fun onChildAdded(dataSnapshot: DataSnapshot, s: String?) {
-                val message: MessageModel? =
-                    wrapSnapshotToClass(MessageModel::class.java, dataSnapshot)
-                message?.let {
-                    messagesList.add(it)
-                    messagesAdapter.notifyDataSetChanged()
-                    binding.rvMessages.scrollToPosition(messagesList.size - 1)
-                    binding.srlMessages.isRefreshing = false
-                }
-            }
-
-            override fun onChildChanged(dataSnapshot: DataSnapshot, s: String?) {}
-            override fun onChildRemoved(dataSnapshot: DataSnapshot) {
-                loadMessages()
-            }
-
-            override fun onChildMoved(dataSnapshot: DataSnapshot, s: String?) {}
-            override fun onCancelled(databaseError: DatabaseError) {
-                binding.srlMessages.isRefreshing = false
-            }
+    private fun observeMessages() {
+        viewModel.messageList.observe(this) {
+            messagesAdapter.submitList(it)
+            binding.rvMessages.scrollToPosition(it.size - 1)
         }
-        messageQuery.addChildEventListener(childEventListener)
     }
 
     override fun onClick(view: View) {
         when (view.id) {
             R.id.ivSend -> {
                 if (Util.connectionAvailable(this)) {
-                    val userMessagePush =
-                        mRootRef.child(NodeNames.MESSAGES).child(currentUserId).child(chatUserId)
-                            .push()
-                    val pushId = userMessagePush.key
-                    sendMessage(
+                    viewModel.createMessageBody(
                         binding.etMessage.text.toString().trim { it <= ' ' },
                         Constants.MESSAGE_TYPE_TEXT,
-                        pushId, false, lastKnownLocation
+                        false, lastKnownLocation, this, false, null
                     )
                 } else {
                     Toast.makeText(this, R.string.no_internet, Toast.LENGTH_SHORT).show()
@@ -485,11 +236,7 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener {
             }
             R.id.ivLocation -> {
                 if (Util.connectionAvailable(this)) {
-                    val userMessagePush =
-                        mRootRef.child(NodeNames.MESSAGES).child(currentUserId).child(chatUserId)
-                            .push()
-                    val pushId = userMessagePush.key
-                    checkPermission(this, pushId)
+                    checkPermission(this, Constants.SEND_LOC_REQ, null)
                 } else {
                     Toast.makeText(this, R.string.no_internet, Toast.LENGTH_SHORT).show()
                 }
@@ -528,86 +275,46 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener {
         }
     }
 
-    override fun onBackPressed() {
-        mRootRef.child(NodeNames.CHATS).child(currentUserId).child(chatUserId)
-            .child(NodeNames.UNREAD_COUNT).setValue(0)
-        super.onBackPressed()
+    private fun checkPermission(context: Context, type: Int, messageModel: MessageModel?) {
+        viewModel.checkPermission(context, type)
+        observePermissionResult(type, messageModel)
     }
 
-    private fun checkPermission(context: Context, pushId: String?) {
-        Dexter.withContext(context)
-            .withPermissions(
-                Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            )
-            .withListener(object : MultiplePermissionsListener {
-                override fun onPermissionsChecked(report: MultiplePermissionsReport) { // check if all permissions are granted
-                    if (report.areAllPermissionsGranted()) {
-                        Constants.IsLocPermissionGranted = true
-                        getDeviceLocation(pushId)
-                    }
-                }
-
-                override fun onPermissionRationaleShouldBeShown(
-                    permissions: List<PermissionRequest?>?,
-                    token: PermissionToken
-                ) {
-                    token.continuePermissionRequest()
-                }
-            })
-            .onSameThread()
-            .check()
+    private fun observePermissionResult(type: Int, messageModel: MessageModel?) {
+        if (type == Constants.SEND_LOC_REQ) {
+            viewModel.isLocPermissionGrantedForReq.observeOnce(this) {
+                if (it)
+                    getDeviceLocation(Constants.SEND_LOC_REQ, messageModel)
+            }
+        } else {
+            viewModel.isLocPermissionGrantedForRes.observeOnce(this) {
+                if (it)
+                    getDeviceLocation(Constants.ACCEPT_LOC_REQ, messageModel)
+            }
+        }
     }
 
-    private fun sendLocCheckPermission(
-        context: Context,
-        messageModel: MessageModel
-    ) {
-        Dexter.withContext(context)
-            .withPermissions(
-                Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            )
-            .withListener(object : MultiplePermissionsListener {
-                override fun onPermissionsChecked(report: MultiplePermissionsReport) { // check if all permissions are granted
-                    if (report.areAllPermissionsGranted()) {
-                        Constants.IsLocPermissionGranted = true
-                        val userMessagePush =
-                            mRootRef.child(NodeNames.MESSAGES).child(currentUserId)
-                                .child(chatUserId)
-                                .push()
-                        val pushId = userMessagePush.key
-                        sendCurrentLocation(pushId, messageModel)
-                    }
-                }
-
-                override fun onPermissionRationaleShouldBeShown(
-                    permissions: List<PermissionRequest?>?,
-                    token: PermissionToken
-                ) {
-                    token.continuePermissionRequest()
-                }
-            })
-            .onSameThread()
-            .check()
-    }
-
-    private fun getDeviceLocation(pushId: String?) {
+    private fun getDeviceLocation(locReqType: Int, messageModel: MessageModel?) {
         try {
             if (Constants.IsLocPermissionGranted) {
                 val locationResult = fusedLocationProviderClient.lastLocation
                 locationResult.addOnCompleteListener(this) { task ->
                     if (task.isSuccessful) {
                         lastKnownLocation = task.result
-                        sendMessage(
-                            binding.etMessage.text.toString().trim { it <= ' ' },
-                            Constants.MESSAGE_TYPE_LOC_REQ,
-                            pushId,
-                            true,
-                            lastKnownLocation
+                        val msgType = if (locReqType == Constants.SEND_LOC_REQ)
+                            Constants.MESSAGE_TYPE_LOC_REQ else Constants.MESSAGE_TYPE_LOC
+                        viewModel.createMessageBody(
+                            "",
+                            msgType, locReqType == Constants.SEND_LOC_REQ,
+                            lastKnownLocation, this, locReqType == Constants.ACCEPT_LOC_REQ,
+                            messageModel
                         )
                     } else {
-                        Toast.makeText(this, "Could not send location", Toast.LENGTH_LONG).show()
+                        Toast.makeText(
+                            this,
+                            "Could not get location,Please check gps",
+                            Toast.LENGTH_LONG
+                        ).show()
                     }
                 }
             }
@@ -616,8 +323,9 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener {
         }
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        query.removeEventListener(valueListener)
+    override fun onBackPressed() {
+        mRootRef.child(NodeNames.CHATS).child(currentUserId).child(chatUserId)
+            .child(NodeNames.UNREAD_COUNT).setValue(0)
+        super.onBackPressed()
     }
 }

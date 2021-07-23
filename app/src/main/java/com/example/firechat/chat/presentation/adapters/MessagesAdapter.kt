@@ -16,7 +16,7 @@ import com.example.firechat.databinding.HalfwayLocMessageLayoutBinding
 import com.example.firechat.databinding.LocationRequestLayoutBinding
 import com.example.firechat.databinding.MessageLayoutBinding
 
-class MessagesAdapter(private val context: Context, private val messageList: List<MessageModel>) :
+class MessagesAdapter(private val context: Context) :
     ListAdapter<MessageModel, RecyclerView.ViewHolder>(MessageDiffCallback()) {
 
     companion object {
@@ -73,7 +73,7 @@ class MessagesAdapter(private val context: Context, private val messageList: Lis
     }
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
-        val message = messageList[position]
+        val message = getItem(position)
         when (holder.itemViewType) {
             Constants.MESSAGE_HOLDER_TYPE_TEXT -> {
                 (holder as MessageViewHolder).onBind(message)
@@ -88,7 +88,7 @@ class MessagesAdapter(private val context: Context, private val messageList: Lis
     }
 
     override fun getItemViewType(position: Int): Int {
-        val message = messageList[position]
+        val message = getItem(position)
         return when (message.messageType) {
             Constants.MESSAGE_TYPE_TEXT -> {
                 Constants.MESSAGE_HOLDER_TYPE_TEXT
@@ -103,10 +103,6 @@ class MessagesAdapter(private val context: Context, private val messageList: Lis
                 Constants.MESSAGE_HOLDER_TYPE_TEXT
             }
         }
-    }
-
-    override fun getItemCount(): Int {
-        return messageList.size
     }
 
     var actionModeCallBack: ActionMode.Callback = object : ActionMode.Callback {
@@ -196,6 +192,6 @@ class MessageDiffCallback : DiffUtil.ItemCallback<MessageModel>() {
     }
 
     override fun areContentsTheSame(oldItem: MessageModel, newItem: MessageModel): Boolean {
-        return oldItem.messageTime == newItem.messageTime
+        return (oldItem.messageTime as Long) == (newItem.messageTime as Long)
     }
 }

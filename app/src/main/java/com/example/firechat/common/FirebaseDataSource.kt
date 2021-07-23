@@ -3,10 +3,12 @@ package com.example.firechat.common
 import com.google.android.gms.tasks.Task
 import com.google.android.gms.tasks.TaskCompletionSource
 import com.google.firebase.database.*
+import java.util.HashMap
+import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class FirebaseReferenceValueObserver {
+class FirebaseReferenceValueObserver @Inject constructor() {
     private var valueEventListener: ValueEventListener? = null
     private var dbRef: DatabaseReference? = null
 
@@ -24,7 +26,7 @@ class FirebaseReferenceValueObserver {
 }
 
 @Singleton
-class FirebaseReferenceChildObserver {
+class FirebaseReferenceChildObserver @Inject constructor() {
     private var valueEventListener: ChildEventListener? = null
     private var dbRef: DatabaseReference? = null
     private var isObserving: Boolean = false
@@ -49,7 +51,7 @@ class FirebaseReferenceChildObserver {
 }
 
 @Singleton
-class FirebaseDataSource {
+class FirebaseDataSource @Inject constructor() {
 
     companion object {
         val dbInstance = FirebaseDatabase.getInstance()
@@ -67,11 +69,11 @@ class FirebaseDataSource {
     ): ChildEventListener {
         return (object : ChildEventListener {
             override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
-                b.invoke(Result.Success(wrapSnapshotToClass(resultClassName, snapshot)))
+                b.invoke(Result.success(wrapSnapshotToClass(resultClassName, snapshot)))
             }
 
             override fun onCancelled(error: DatabaseError) {
-                b.invoke(Result.Error(error.message))
+                b.invoke(Result.error(error.message))
             }
 
             override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {}
@@ -104,18 +106,28 @@ class FirebaseDataSource {
         b: ((Result<T>) -> Unit)
     ) {
         val listener = attachChildListenerToBlock(resultClassName, b)
-        refObs.start(listener, refToPath("messages/$messagesID"))
+        refObs.start(listener, refToPath(messagesID))
     }
 
-    fun <T> createAndObserveChat(chatId: String, b: (Result<T>) -> Unit) {
-
-    }
-
-    private fun attachChatRecordListener(path: String): Task<DataSnapshot> {
+    fun attachCreateChatListener(path: String): Task<DataSnapshot> {
         val src = TaskCompletionSource<DataSnapshot>()
         val listener = attachValueListenerToTaskCompletion(src)
         refToPath(path).addListenerForSingleValueEvent(listener)
         return src.task
+    }
+
+    fun sendMessageToUser(messageUserMap: HashMap<String, Any>, b: (String?) -> Unit) {
+        dbInstance.reference.updateChildren(messageUserMap, attachUpdateListener(b))
+    }
+
+    private fun attachUpdateListener(src: (String?) -> Unit): DatabaseReference.CompletionListener? {
+        return (DatabaseReference.CompletionListener { databaseError, _ ->
+            if (databaseError != null) {
+                src.invoke(databaseError.message)
+            } else {
+                src.invoke(null)
+            }
+        })
     }
     //end region
 }

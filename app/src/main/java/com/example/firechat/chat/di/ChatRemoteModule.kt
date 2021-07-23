@@ -3,6 +3,7 @@ package com.example.firechat.chat.di
 import com.example.firechat.chat.data.repository.ChatRepository
 import com.example.firechat.chat.data.repository.ChatRepositoryImpl
 import com.example.firechat.chat.domain.ChatUseCase
+import com.example.firechat.chat.domain.ChatUseCaseImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -20,8 +21,8 @@ abstract class ChatRemoteModule {
 
 
     @Binds
-    abstract fun bindsArticlesUseCase(
-        mActiveUsersUseCase: ChatUseCase
+    abstract fun bindsChatUseCase(
+        mActiveUsersUseCase: ChatUseCaseImpl
     ): ChatUseCase
 
 }

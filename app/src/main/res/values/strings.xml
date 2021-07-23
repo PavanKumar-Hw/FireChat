@@ -51,4 +51,5 @@
     <string name="location_request">Location request</string>
     <string name="location_request_sent">Location request sent</string>
     <string name="_10">10</string>
+    <string name="chat_not_created">Chat not created</string>
 </resources>

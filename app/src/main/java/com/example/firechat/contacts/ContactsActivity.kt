@@ -7,8 +7,10 @@ import com.example.firechat.chat.presentation.activities.ChatActivity
 import com.example.firechat.common.Constants
 import com.example.firechat.common.Extras
 import com.example.firechat.databinding.ActivityContactsBinding
+import dagger.hilt.android.AndroidEntryPoint
 import kotlin.collections.ArrayList
 
+@AndroidEntryPoint
 class ContactsActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityContactsBinding

@@ -2,7 +2,12 @@ package com.example.firechat.common
 
 class Constants {
     companion object {
+
+        const val SEND_LOC_REQ: Int = 1
+        const val ACCEPT_LOC_REQ: Int = 1
+
         const val SENDER_ID: String = "282333194999"
+
         const val FIREBASE_KEY: String =
             "AAAAQbxeqvc:APA91bERmwmkbC1NxkQl-ZHiOz0s3kMoAv0DBLMZBhl-CS9Y5xVg9cfUcPlJukdkK3kA8H3rOS1S9WHcdQhwuoiQbrr2bBuO0xSo3v5PhszfFueelvQd6SstFJiasIafoiqnCA_fz1YZ"
 

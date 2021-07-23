@@ -1,26 +1,27 @@
 package com.example.firechat.chat.data.models
 
+import com.example.firechat.NodeNames
 import com.google.firebase.database.PropertyName
 
 data class MessageModel(
-    @get:PropertyName("message") @set:PropertyName("message")
+    @get:PropertyName(NodeNames.MESSAGE) @set:PropertyName(NodeNames.MESSAGE)
     var message: String? = "",
-    @get:PropertyName("messageFrom") @set:PropertyName("messageFrom")
+    @get:PropertyName(NodeNames.MESSAGE_FROM) @set:PropertyName(NodeNames.MESSAGE_FROM)
     var messageFrom: String? = "",
-    @get:PropertyName("messageTo") @set:PropertyName("messageTo")
+    @get:PropertyName(NodeNames.MESSAGE_TO) @set:PropertyName(NodeNames.MESSAGE_TO)
     var messageTo: String? = "",
-    @get:PropertyName("messageId") @set:PropertyName("messageId")
+    @get:PropertyName(NodeNames.MESSAGE_ID) @set:PropertyName(NodeNames.MESSAGE_ID)
     var messageId: String? = "",
-    @get:PropertyName("messageTime") @set:PropertyName("messageTime")
-    var messageTime: Long = 0,
-    @get:PropertyName("messageType") @set:PropertyName("messageType")
+    @get:PropertyName(NodeNames.MESSAGE_TIME) @set:PropertyName(NodeNames.MESSAGE_TIME)
+    var messageTime: Any? = null,
+    @get:PropertyName(NodeNames.MESSAGE_TYPE) @set:PropertyName(NodeNames.MESSAGE_TYPE)
     var messageType: String? = "",
-    @get:PropertyName("location") @set:PropertyName("location")
+    @get:PropertyName(NodeNames.LOCATION) @set:PropertyName(NodeNames.LOCATION)
     var location: Location? = null,
-    @get:PropertyName("requestOptions") @set:PropertyName("requestOptions")
+    @get:PropertyName(NodeNames.REQ_OPTIONS) @set:PropertyName(NodeNames.REQ_OPTIONS)
     var requestOptions: RequestOptions? = null,
-    @get:PropertyName("imagePath") @set:PropertyName("imagePath")
+    @get:PropertyName(NodeNames.IMAGE_PATH) @set:PropertyName(NodeNames.IMAGE_PATH)
     var imagePath: String? = "",
-    @get:PropertyName("videoPath") @set:PropertyName("videoPath")
+    @get:PropertyName(NodeNames.VIDEO_PATH) @set:PropertyName(NodeNames.VIDEO_PATH)
     var videoPath: String? = ""
 )

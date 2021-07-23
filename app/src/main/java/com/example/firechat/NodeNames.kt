@@ -26,6 +26,9 @@ class NodeNames {
         const val REQ_EXPIRY = "expireTime"
         const val LOCATION_CURRENT = "requestingUserLoc"
         const val LOCATION_CHAT = "senderUserLoc"
+        const val LOCATION_HALFWAY = "halfwayPoint"
+        const val IMAGE_PATH = "imagePath"
+        const val VIDEO_PATH = "videoPath"
 
         const val DEVICE_TOKEN = "device_token"
         const val UNREAD_COUNT = "unread_count"

@@ -13,6 +13,7 @@ import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.widget.doAfterTextChanged
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.firechat.NodeNames
 import com.example.firechat.R
 import com.example.firechat.chat.data.models.MessageModel
@@ -50,6 +51,7 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener {
     private lateinit var userName: String
     private lateinit var messagesList: ArrayList<MessageModel>
     private lateinit var messagesAdapter: MessagesAdapter
+    private lateinit var listAdapterObserver: RecyclerView.AdapterDataObserver
     private var currentPage = 1
     private val RECORD_PER_PAGE = 30
     private lateinit var database: DatabaseReference

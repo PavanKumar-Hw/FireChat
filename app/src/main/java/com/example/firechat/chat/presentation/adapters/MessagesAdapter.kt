@@ -5,6 +5,8 @@ import android.content.Intent
 import android.view.*
 import androidx.appcompat.view.ActionMode
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.firechat.R
 import com.example.firechat.chat.data.models.MessageModel
@@ -15,7 +17,7 @@ import com.example.firechat.databinding.LocationRequestLayoutBinding
 import com.example.firechat.databinding.MessageLayoutBinding
 
 class MessagesAdapter(private val context: Context, private val messageList: List<MessageModel>) :
-    RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+    ListAdapter<MessageModel, RecyclerView.ViewHolder>(MessageDiffCallback()) {
 
     companion object {
         var selectedView: ConstraintLayout? = null
@@ -65,9 +67,7 @@ class MessagesAdapter(private val context: Context, private val messageList: Lis
                 HalfwayLocViewHolder(view, context, actionModeCallBack)
             }
             else -> {
-                val view =
-                    MessageLayoutBinding.inflate(LayoutInflater.from(parent.context), parent, false)
-                MessageViewHolder(view, actionModeCallBack, context)
+                throw Exception("Error reading holder type")
             }
         }
     }
@@ -187,5 +187,15 @@ class MessagesAdapter(private val context: Context, private val messageList: Lis
             actionMode = null
             selectedView!!.setBackgroundColor(context.resources.getColor(R.color.chat_background))
         }
+    }
+}
+
+class MessageDiffCallback : DiffUtil.ItemCallback<MessageModel>() {
+    override fun areItemsTheSame(oldItem: MessageModel, newItem: MessageModel): Boolean {
+        return oldItem == newItem
+    }
+
+    override fun areContentsTheSame(oldItem: MessageModel, newItem: MessageModel): Boolean {
+        return oldItem.messageTime == newItem.messageTime
     }
 }

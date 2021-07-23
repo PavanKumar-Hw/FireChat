@@ -3,6 +3,7 @@ plugins {
     id 'kotlin-android'
     id 'kotlin-kapt'
     id 'com.google.gms.google-services'
+    id 'dagger.hilt.android.plugin'
 }
 
 android {
@@ -70,8 +71,9 @@ dependencies {
     implementation 'com.github.bumptech.glide:glide:4.12.0'
 
     //dagger-hilt
-    implementation "com.google.dagger:hilt-android:2.37" //don't upgrade unless same version of kapt availale
-    kapt "com.google.dagger:hilt-android-compiler:2.37"
+    implementation "com.google.dagger:hilt-android:2.37"
+    //don't upgrade unless same version of kapt availale
+    kapt "com.google.dagger:hilt-android-compiler:$hilt_version"
     implementation 'androidx.hilt:hilt-work:1.0.0'
     kapt "androidx.hilt:hilt-compiler:1.0.0"
 

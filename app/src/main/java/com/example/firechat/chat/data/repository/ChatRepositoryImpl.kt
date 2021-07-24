@@ -1,10 +1,10 @@
 package com.example.firechat.chat.data.repository
 
 import android.content.Context
+import com.example.firechat.NodeNames
 import com.example.firechat.chat.data.models.MessageModel
-import com.example.firechat.common.FirebaseDataSource
-import com.example.firechat.common.FirebaseReferenceChildObserver
-import com.example.firechat.common.Result
+import com.example.firechat.common.*
+import com.google.firebase.database.DataSnapshot
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.util.HashMap
 import javax.inject.Inject
@@ -27,6 +27,26 @@ class ChatRepositoryImpl @Inject constructor(private val firebaseDataSource: Fir
 
     override fun sendMessage(messageUserMap: HashMap<String, Any>, b: (String?) -> Unit) {
         firebaseDataSource.sendMessageToUser(messageUserMap, b)
+    }
+
+    override fun observeSenderTypingStatus(
+        refPath: String,
+        typingObserver: FirebaseReferenceValueObserver,
+        b: (DataSnapshot?, Boolean) -> Unit
+    ) {
+        firebaseDataSource.attachSenderTypingStatus(refPath, typingObserver, b)
+    }
+
+    override fun observeActiveStatus(
+        refPath: String,
+        activeStateObserver: FirebaseReferenceValueObserver,
+        b: (DataSnapshot?, Boolean) -> Unit
+    ) {
+        firebaseDataSource.attachUserActiveStatus(refPath, activeStateObserver, b)
+    }
+
+    override fun updateUserTypingStatus(refPath: String, status: String) {
+        firebaseDataSource.updateUserTypingStatus(refPath, status)
     }
 
 }

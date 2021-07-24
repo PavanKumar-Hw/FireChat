@@ -2,7 +2,9 @@ package com.example.firechat.chat.data.repository
 
 import com.example.firechat.chat.data.models.MessageModel
 import com.example.firechat.common.FirebaseReferenceChildObserver
+import com.example.firechat.common.FirebaseReferenceValueObserver
 import com.example.firechat.common.Result
+import com.google.firebase.database.DataSnapshot
 import java.util.HashMap
 
 interface ChatRepository {
@@ -16,4 +18,16 @@ interface ChatRepository {
         messageUserMap: HashMap<String, Any>,
         b: ((String?) -> Unit)
     )
+
+    fun observeSenderTypingStatus(
+        refPath: String, typingObserver: FirebaseReferenceValueObserver,
+        b: ((DataSnapshot?, Boolean) -> Unit)
+    )
+
+    fun observeActiveStatus(
+        refPath: String, activeStateObserver: FirebaseReferenceValueObserver,
+        b: ((DataSnapshot?, Boolean) -> Unit)
+    )
+
+    fun updateUserTypingStatus(refPath: String, status: String)
 }

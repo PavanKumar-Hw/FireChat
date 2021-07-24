@@ -26,6 +26,13 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        val databaseReferenceUsers = FirebaseDatabase.getInstance().reference
+            .child(NodeNames.USERS).child(Constants.currentUserId)
+
+        databaseReferenceUsers.child(NodeNames.ONLINE).setValue(true)
+        databaseReferenceUsers.child(NodeNames.ONLINE).onDisconnect().setValue(false)
+
         initDatabase()
         initViews()
     }

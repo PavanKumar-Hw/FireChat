@@ -29,9 +29,17 @@ class ChatViewModel @Inject constructor(
     private val fbRefMessagesChildObserver: FirebaseReferenceChildObserver
 ) : ViewModel() {
 
+    @Inject
+    lateinit var typingObserver: FirebaseReferenceValueObserver
+
+    @Inject
+    lateinit var activeStateObserver: FirebaseReferenceValueObserver
+
     lateinit var chatUserId: String
     val isLocPermissionGrantedForReq = MutableLiveData(false)
     val isLocPermissionGrantedForRes = MutableLiveData(false)
+    val typingStatus = MutableLiveData<String>()
+    val activeStatus = MutableLiveData<String>()
     val clearText = MutableLiveData(false)
     var messageList = MediatorLiveData<MutableList<MessageModel>>()
 
@@ -162,6 +170,8 @@ class ChatViewModel @Inject constructor(
     override fun onCleared() {
         super.onCleared()
         fbRefMessagesChildObserver.clear()
+        typingObserver.clear()
+        activeStateObserver.clear()
     }
 
     fun checkPermission(context: Context, type: Int) {
@@ -204,9 +214,45 @@ class ChatViewModel @Inject constructor(
                     result.data.let { _addedMessage.value = it }
                 }
                 Status.ERROR -> {
+                    //do nothing
                 }
                 Status.LOADING -> {
+                    //do nothing
                 }
+            }
+        }
+    }
+
+    fun updateTypingStatus(refPath: String, status: String) {
+        chatUseCase.updateUserTypingStatus(refPath, status)
+    }
+
+    fun observeSenderTypingStatus(refPath: String) {
+        chatUseCase.observeSenderTypingStatus(refPath, typingObserver) { status, b ->
+            if (status?.child(NodeNames.TYPING)?.value != null) {
+                val isTyping = status.child(NodeNames.TYPING).value.toString()
+                if (isTyping == Constants.TYPING_STARTED)
+                    typingStatus.value = Constants.STATUS_TYPING
+                else
+                    typingStatus.value = Constants.STATUS_ONLINE
+            } else {
+                typingStatus.value = activeStatus.value
+            }
+        }
+    }
+
+    fun observeSenderActiveStatus(refPath: String) {
+        chatUseCase.observeActiveStatus(refPath, activeStateObserver) { snapShot, b ->
+            if (!b) {
+                var statusTemp = ""
+                if (snapShot?.child(NodeNames.ONLINE)?.value != null)
+                    statusTemp = snapShot.child(NodeNames.ONLINE).value.toString()
+                if (statusTemp == "true")
+                    activeStatus.value = Constants.STATUS_ONLINE
+                else
+                    activeStatus.value = Constants.STATUS_OFFLINE
+            } else {
+                activeStatus.value = Constants.STATUS_OFFLINE
             }
         }
     }

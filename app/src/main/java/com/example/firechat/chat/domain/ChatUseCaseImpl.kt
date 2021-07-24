@@ -3,7 +3,9 @@ package com.example.firechat.chat.domain
 import com.example.firechat.chat.data.models.MessageModel
 import com.example.firechat.chat.data.repository.ChatRepository
 import com.example.firechat.common.FirebaseReferenceChildObserver
+import com.example.firechat.common.FirebaseReferenceValueObserver
 import com.example.firechat.common.Result
+import com.google.firebase.database.DataSnapshot
 import java.util.HashMap
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -25,6 +27,26 @@ class ChatUseCaseImpl @Inject constructor(private val chatRepository: ChatReposi
         b: (String?) -> Unit
     ) {
         chatRepository.sendMessage(messageUserMap, b)
+    }
+
+    override fun observeSenderTypingStatus(
+        refPath: String,
+        typingObserver: FirebaseReferenceValueObserver,
+        b: (DataSnapshot?, Boolean) -> Unit
+    ) {
+        chatRepository.observeSenderTypingStatus(refPath, typingObserver, b)
+    }
+
+    override fun observeActiveStatus(
+        refPath: String,
+        activeStateObserver: FirebaseReferenceValueObserver,
+        b: (DataSnapshot?, Boolean) -> Unit
+    ) {
+        chatRepository.observeActiveStatus(refPath, activeStateObserver, b)
+    }
+
+    override fun updateUserTypingStatus(refPath: String, status: String) {
+        chatRepository.updateUserTypingStatus(refPath, status)
     }
 
 }

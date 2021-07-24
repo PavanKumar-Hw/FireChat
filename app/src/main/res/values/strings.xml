@@ -45,7 +45,7 @@
     <string name="failed_to_fetch_friend_list">Failed to fetch friends list : %1$s</string>
     <string name="failed_to_save_device_token">Failed to save device token : $1%s</string>
     <string name="failed_to_send_notification">Failed to send notification : %1$s</string>
-    <string name="something_went_wrong">Something went %s</string>
+    <string name="something_went_wrong">Something went wrong : %s</string>
     <string name="cancel">Cancel</string>
     <string name="reject">Reject</string>
     <string name="location_request">Location request</string>

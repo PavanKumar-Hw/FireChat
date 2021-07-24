@@ -37,7 +37,6 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener {
 
     private lateinit var binding: ActivityChatBinding
     private lateinit var mRootRef: DatabaseReference
-    private lateinit var chatUserId: String
     private lateinit var userName: String
     private lateinit var messagesAdapter: MessagesAdapter
     private lateinit var listAdapterObserver: RecyclerView.AdapterDataObserver
@@ -66,7 +65,6 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener {
         }
         if (intent.hasExtra(Extras.USER_KEY)) {
             intent.getStringExtra(Extras.USER_KEY)?.let {
-                chatUserId = it
                 viewModel.chatUserId = it
             }
         }
@@ -99,27 +97,6 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener {
         initRecyclerView()
         loadMessages()
 
-        messagesAdapter.addAcceptListener { messageModel, i ->
-            Toast.makeText(
-                this,
-                "Accepted ${messageModel.location?.requestingUserLoc}",
-                Toast.LENGTH_LONG
-            ).show()
-            if (Util.connectionAvailable(this)) {
-                checkPermission(this, Constants.ACCEPT_LOC_REQ, messageModel)
-            }
-        }
-        messagesAdapter.addRejectListener { messageModel, i ->
-            Toast.makeText(this, "Rejected", Toast.LENGTH_LONG).show()
-        }
-        messagesAdapter.addCancelListener { messageModel, i ->
-            Toast.makeText(
-                this,
-                "Cancelled ${messageModel.location?.requestingUserLoc}",
-                Toast.LENGTH_LONG
-            ).show()
-        }
-
         if (intent.hasExtra(Extras.MESSAGE) &&
             intent.hasExtra(Extras.MESSAGE_ID) &&
             intent.hasExtra(Extras.MESSAGE_TYPE)
@@ -138,48 +115,26 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener {
             }
         }
 
-        val databaseReferenceUsers: DatabaseReference =
-            mRootRef.child(NodeNames.USERS).child(chatUserId)
-        databaseReferenceUsers.addValueEventListener(object : ValueEventListener {
-            override fun onDataChange(dataSnapshot: DataSnapshot) {
-                var status = ""
-                if (dataSnapshot.child(NodeNames.ONLINE).value != null) status =
-                    dataSnapshot.child(NodeNames.ONLINE).value.toString()
-                if (status == "true")
-                    toolBarBinding.tvUserStatus.text = STATUS_ONLINE
-                else
-                    toolBarBinding.tvUserStatus.text = STATUS_OFFLINE
-            }
+        viewModel.observeSenderActiveStatus(NodeNames.USERS + "/" + viewModel.chatUserId)
+        viewModel.activeStatus.observe(this) {
+            toolBarBinding.tvUserStatus.text = it
+        }
 
-            override fun onCancelled(databaseError: DatabaseError) {}
-        })
-
-
+        val currentUserRef =
+            NodeNames.CHATS + "/" + currentUserId + "/" + viewModel.chatUserId + "/" + NodeNames.TYPING
         binding.etMessage.doAfterTextChanged { editable ->
-            val currentUserRef: DatabaseReference =
-                mRootRef.child(NodeNames.CHATS).child(currentUserId).child(chatUserId)
             if (editable.toString() == "") {
-                currentUserRef.child(NodeNames.TYPING).setValue(Constants.TYPING_STOPPED)
+                viewModel.updateTypingStatus(currentUserRef, Constants.TYPING_STOPPED)
             } else {
-                currentUserRef.child(NodeNames.TYPING).setValue(Constants.TYPING_STARTED)
+                viewModel.updateTypingStatus(currentUserRef, Constants.TYPING_STARTED)
             }
         }
 
-        val chatUserRef: DatabaseReference =
-            mRootRef.child(NodeNames.CHATS).child(chatUserId).child(currentUserId)
-        chatUserRef.addValueEventListener(object : ValueEventListener {
-            override fun onDataChange(dataSnapshot: DataSnapshot) {
-                if (dataSnapshot.child(NodeNames.TYPING).value != null) {
-                    val typingStatus = dataSnapshot.child(NodeNames.TYPING).value.toString()
-                    if (typingStatus == Constants.TYPING_STARTED)
-                        toolBarBinding.tvUserStatus.text = STATUS_TYPING
-                    else
-                        toolBarBinding.tvUserStatus.text = STATUS_ONLINE
-                }
-            }
-
-            override fun onCancelled(databaseError: DatabaseError) {}
-        })
+        val chatUserRef = NodeNames.CHATS + "/" + viewModel.chatUserId + "/" + currentUserId
+        viewModel.observeSenderTypingStatus(chatUserRef)
+        viewModel.typingStatus.observe(this) {
+            toolBarBinding.tvUserStatus.text = it
+        }
     }
 
     private fun observerClearMessage() {
@@ -209,7 +164,7 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener {
     }
 
     private fun loadMessages() {
-        val messagesPath = NodeNames.MESSAGES + "/" + currentUserId + "/" + chatUserId
+        val messagesPath = NodeNames.MESSAGES + "/" + currentUserId + "/" + viewModel.chatUserId
         viewModel.loadMessages(messagesPath)
         observeMessages()
     }
@@ -246,11 +201,11 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener {
 
     fun deleteMessage(messageId: String, messageType: String) {
         val databaseReference = mRootRef.child(NodeNames.MESSAGES)
-            .child(currentUserId).child(chatUserId).child(messageId)
+            .child(currentUserId).child(viewModel.chatUserId).child(messageId)
         databaseReference.removeValue().addOnCompleteListener { task ->
             if (task.isSuccessful) {
                 val databaseReferenceChatUser = mRootRef.child(NodeNames.MESSAGES)
-                    .child(chatUserId).child(currentUserId).child(messageId)
+                    .child(viewModel.chatUserId).child(currentUserId).child(messageId)
                 databaseReferenceChatUser.removeValue().addOnCompleteListener { task ->
                     if (task.isSuccessful) {
                         Toast.makeText(
@@ -324,7 +279,7 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener {
     }
 
     override fun onBackPressed() {
-        mRootRef.child(NodeNames.CHATS).child(currentUserId).child(chatUserId)
+        mRootRef.child(NodeNames.CHATS).child(currentUserId).child(viewModel.chatUserId)
             .child(NodeNames.UNREAD_COUNT).setValue(0)
         super.onBackPressed()
     }

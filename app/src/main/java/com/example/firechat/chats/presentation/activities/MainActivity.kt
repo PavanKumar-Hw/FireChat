@@ -1,14 +1,15 @@
-package com.example.firechat
+package com.example.firechat.chats.presentation.activities
 
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.example.firechat.adapters.ChatListAdapter
+import com.example.firechat.chats.adapters.ChatListAdapter
 import com.example.firechat.common.Constants
-import com.example.firechat.contacts.ContactsActivity
+import com.example.firechat.common.NodeNames
+import com.example.firechat.contacts.presentation.activities.ContactsActivity
 import com.example.firechat.databinding.ActivityMainBinding
-import com.example.firechat.models.ChatListModel
+import com.example.firechat.chats.data.models.ChatListModel
 import com.google.firebase.database.*
 
 class MainActivity : AppCompatActivity() {

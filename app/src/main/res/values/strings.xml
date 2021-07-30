@@ -52,4 +52,5 @@
     <string name="location_request_sent">Location request sent</string>
     <string name="_10">10</string>
     <string name="chat_not_created">Chat not created</string>
+    <string name="google_maps_key" templateMergeStrategy="preserve" translatable="false">AIzaSyAXYZlp1wnB7v5VzyHvfMwbYB_eolUDHfE</string>
 </resources>

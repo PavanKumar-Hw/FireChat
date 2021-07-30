@@ -3,6 +3,7 @@ package com.example.firechat.contacts
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
+import com.example.firechat.contacts.data.models.ContactModel
 import com.example.firechat.databinding.ContactViewBinding
 
 class ContactsAdapter : RecyclerView.Adapter<ContactsViewHolder>() {

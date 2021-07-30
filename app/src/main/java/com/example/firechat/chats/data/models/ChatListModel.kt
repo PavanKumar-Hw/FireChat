@@ -1,4 +1,4 @@
-package com.example.firechat.models
+package com.example.firechat.chats.data.models
 
 class ChatListModel(
     var userId: String,

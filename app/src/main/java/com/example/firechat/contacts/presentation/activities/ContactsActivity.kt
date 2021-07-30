@@ -1,4 +1,4 @@
-package com.example.firechat.contacts
+package com.example.firechat.contacts.presentation.activities
 
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
@@ -6,6 +6,8 @@ import android.os.Bundle
 import com.example.firechat.chat.presentation.activities.ChatActivity
 import com.example.firechat.common.Constants
 import com.example.firechat.common.Extras
+import com.example.firechat.contacts.data.models.ContactModel
+import com.example.firechat.contacts.ContactsAdapter
 import com.example.firechat.databinding.ActivityContactsBinding
 import dagger.hilt.android.AndroidEntryPoint
 import kotlin.collections.ArrayList
@@ -32,8 +34,8 @@ class ContactsActivity : AppCompatActivity() {
         adapter = ContactsAdapter()
         adapter.addClickListener { contactModel, i ->
             val intent = Intent(this, ChatActivity::class.java)
-            intent.putExtra(Extras.USER_NAME, contactModel.userName)
-            intent.putExtra(Extras.USER_KEY, contactModel.userId)
+            intent.putExtra(Extras.USER_NAME, contactModel.contactName)
+            intent.putExtra(Extras.USER_KEY, contactModel.contactId)
             startActivity(intent)
             finish()
         }
@@ -45,7 +47,17 @@ class ContactsActivity : AppCompatActivity() {
         val list = ArrayList<ContactModel>()
         listUsers.forEach {
             if (it != Constants.currentUserId) {
-                list.add(ContactModel(it, "Pavan Kumar", ""))
+                when (it) {
+                    "jwUOcUWEnJWgiGELCqOcQxNga5Y2" -> {
+                        list.add(ContactModel(it, "Pavan Kumar", "", "", "", ""))
+                    }
+                    "6bOtNlitcKTDxLxrEjdAiyYpM513" -> {
+                        list.add(ContactModel(it, "Giridhar", "", "", "", ""))
+                    }
+                    else -> {
+                        list.add(ContactModel(it, "Madhu", "", "", "", ""))
+                    }
+                }
             }
         }
         return list

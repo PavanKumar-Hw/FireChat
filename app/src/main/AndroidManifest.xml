@@ -8,21 +8,21 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
     <application
+        android:name=".FireChat"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:name=".FireChat"
         android:theme="@style/Theme.FireChat"
         android:usesCleartextTraffic="true">
-        <activity android:name=".contacts.ContactsActivity" />
+        <activity android:name=".contacts.presentation.activities.ContactsActivity" />
 
         <activity
             android:name=".chat.presentation.activities.ChatActivity"
             android:theme="@style/Theme.FireChat.Toolbar" />
 
-        <activity android:name=".MainActivity">
+        <activity android:name=".chats.presentation.activities.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -39,6 +39,9 @@
             </intent-filter>
         </service>
 
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="@string/google_maps_key" />
     </application>
 
 </manifest>

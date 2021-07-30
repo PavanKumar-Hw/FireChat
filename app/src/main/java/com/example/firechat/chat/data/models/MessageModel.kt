@@ -1,6 +1,8 @@
 package com.example.firechat.chat.data.models
 
-import com.example.firechat.NodeNames
+import com.example.firechat.common.NodeNames
+import com.example.firechat.contacts.data.entities.UserContactEntity
+import com.google.firebase.database.Exclude
 import com.google.firebase.database.PropertyName
 
 data class MessageModel(
@@ -23,5 +25,7 @@ data class MessageModel(
     @get:PropertyName(NodeNames.IMAGE_PATH) @set:PropertyName(NodeNames.IMAGE_PATH)
     var imagePath: String? = "",
     @get:PropertyName(NodeNames.VIDEO_PATH) @set:PropertyName(NodeNames.VIDEO_PATH)
-    var videoPath: String? = ""
+    var videoPath: String? = "",
+    @get:Exclude @set:Exclude
+    var userContact: UserContactEntity? = null
 )

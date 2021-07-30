@@ -6,7 +6,7 @@ import android.widget.Toast
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.example.firechat.NodeNames
+import com.example.firechat.common.NodeNames
 import com.example.firechat.R
 import com.example.firechat.chat.data.models.Location
 import com.example.firechat.chat.data.models.MessageModel
@@ -14,6 +14,7 @@ import com.example.firechat.chat.data.models.RequestOptions
 import com.example.firechat.chat.domain.ChatUseCase
 import com.example.firechat.common.*
 import com.google.firebase.database.ServerValue
+import com.google.firebase.database.core.ServerValues
 import com.karumi.dexter.Dexter
 import com.karumi.dexter.MultiplePermissionsReport
 import com.karumi.dexter.PermissionToken
@@ -89,9 +90,12 @@ class ChatViewModel @Inject constructor(
             )
         }
         val message = MessageModel(
-            message = msg, messageFrom = Constants.currentUserId,
-            messageTo = chatUserId, messageId = pushId,
-            messageType = msgType, messageTime = ServerValue.TIMESTAMP,
+            message = msg,
+            messageFrom = Constants.currentUserId,
+            messageTo = chatUserId,
+            messageId = pushId,
+            messageType = msgType,
+            messageTime = ServerValue.TIMESTAMP[ServerValues.NAME_SUBKEY_SERVERVALUE]?.toLong(),
             location = location
         )
         if (isLocationReq) {
@@ -100,7 +104,7 @@ class ChatViewModel @Inject constructor(
         val messageUserMap: HashMap<String, Any> = HashMap<String, Any>()
         messageUserMap["$currentUserRef/$pushId"] = message
         messageUserMap["$chatUserRef/$pushId"] = message
-        prepareNotification(messageUserMap, msgType, msg, context)
+        prepareNotification(messageUserMap, msgType, message, context)
     }
 
     private fun createTextMessage(
@@ -111,15 +115,18 @@ class ChatViewModel @Inject constructor(
         chatUserRef: String
     ) {
         val message = MessageModel(
-            message = msg, messageFrom = Constants.currentUserId,
-            messageTo = chatUserId, messageId = pushId,
-            messageType = msgType, messageTime = ServerValue.TIMESTAMP
+            message = msg,
+            messageFrom = Constants.currentUserId,
+            messageTo = chatUserId,
+            messageId = pushId,
+            messageType = msgType,
+            messageTime = ServerValue.TIMESTAMP
         )
         val messageUserMap: HashMap<String, Any> = HashMap<String, Any>()
         messageUserMap["$currentUserRef/$pushId"] = message
         messageUserMap["$chatUserRef/$pushId"] = message
         clearText.value = true
-        prepareNotification(messageUserMap, msgType, msg, context)
+        prepareNotification(messageUserMap, msgType, message, context)
     }
 
     private fun generateMessageId(): String? {
@@ -134,7 +141,7 @@ class ChatViewModel @Inject constructor(
     private fun prepareNotification(
         messageUserMap: HashMap<String, Any>,
         msgType: String,
-        msg: String,
+        msg: MessageModel,
         context: Context
     ) {
         chatUseCase.sendMessage(messageUserMap) {
@@ -159,7 +166,7 @@ class ChatViewModel @Inject constructor(
                     else -> ""
                 }
                 Util.sendNotification(context, title, msg, chatUserId)
-                val lastMessage = if (title != "New Message") title else msg
+                val lastMessage = if (title != "New Message") title else msg.message
                 Util.updateChatDetails(
                     context, Constants.currentUserId, chatUserId, lastMessage
                 )

@@ -1,6 +1,6 @@
 package com.example.firechat.chat.data.models
 
-import com.example.firechat.NodeNames
+import com.example.firechat.common.NodeNames
 import com.google.firebase.database.PropertyName
 
 data class RequestOptions(

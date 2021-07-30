@@ -1,4 +1,4 @@
-package com.example.firechat
+package com.example.firechat.common
 
 class NodeNames {
     companion object {

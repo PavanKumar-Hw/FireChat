@@ -6,13 +6,11 @@ import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
-import com.android.volley.RequestQueue
-import com.android.volley.Response
-import com.android.volley.toolbox.JsonObjectRequest
-import com.android.volley.toolbox.Volley
-import com.example.firechat.NodeNames
 import com.example.firechat.R
+import com.example.firechat.chat.data.models.MessageModel
+import com.example.firechat.fcmPushNotification.FCMSender
 import com.google.firebase.database.*
+import com.google.gson.Gson
 import org.json.JSONException
 import org.json.JSONObject
 import java.util.*
@@ -35,11 +33,13 @@ object Util {
         hashMap[NodeNames.DEVICE_TOKEN] = token
         databaseReference.setValue(hashMap).addOnCompleteListener { task ->
             if (!task.isSuccessful) {
-                Toast.makeText(
-                    context,
-                    R.string.failed_to_save_device_token,
-                    Toast.LENGTH_SHORT
-                ).show()
+                context?.let {
+                    Toast.makeText(
+                        context,
+                        R.string.failed_to_save_device_token,
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
             }
         }
     }
@@ -117,55 +117,48 @@ object Util {
         })
     }
 
-    fun sendNotification(context: Context, title: String?, message: String?, userId: String?) {
+    fun sendNotification(context: Context, title: String?, message: MessageModel, userId: String?) {
         val rootRef = FirebaseDatabase.getInstance().reference
         val databaseReference = rootRef.child(NodeNames.TOKENS).child(userId!!)
         databaseReference.addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(dataSnapshot: DataSnapshot) {
                 if (dataSnapshot.child(NodeNames.DEVICE_TOKEN).value != null) {
                     val deviceToken = dataSnapshot.child(NodeNames.DEVICE_TOKEN).value.toString()
-                    val notification = JSONObject()
-                    val notificationData = JSONObject()
                     try {
-                        notificationData.put(Constants.NOTIFICATION_TITLE, title)
-                        notificationData.put(Constants.NOTIFICATION_MESSAGE, message)
-                        notificationData.put(Constants.NOTIFICATION_FROM, userId)
-                        notification.put(Constants.NOTIFICATION_TO, deviceToken)
-                        notification.put(Constants.NOTIFICATION_DATA, notificationData)
-                        val fcmApiUrl = "https://fcm.googleapis.com/fcm/send"
-                        val contentType = "application/json"
-                        val successListener: Any = Response.Listener<Any> {
-                            Toast.makeText(
-                                context,
-                                "Notification Sent",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                        val failureListener: Response.ErrorListener =
-                            Response.ErrorListener { error ->
-                                Toast.makeText(
-                                    context,
-                                    context.getString(
-                                        R.string.failed_to_send_notification,
-                                        error.message
-                                    ), Toast.LENGTH_SHORT
-                                ).show()
-                            }
-                        val jsonObjectRequest: JsonObjectRequest = object : JsonObjectRequest(
-                            fcmApiUrl, notification,
-                            successListener as Response.Listener<JSONObject>?, failureListener
-                        ) {
-                            override fun getHeaders(): MutableMap<String, String> {
-                                val params: MutableMap<String, String> = HashMap()
-                                params["Authorization"] = "key=" + Constants.FIREBASE_KEY
-                                params["Sender"] = "id=" + Constants.SENDER_ID
-                                params["Content-Type"] = contentType
-                                return params
-                            }
+                        try {
+                            val data = JSONObject()
+                            val pushData = JSONObject()
+                            data.put("type", title)
+                            data.put(Constants.NOTIFICATION_FROM, message.messageFrom)
+                            data.put(Constants.NOTIFICATION_TITLE, title)
+                            data.put(Constants.NOTIFICATION_MESSAGE, Gson().fromObject(message))
+                            data.put(Constants.NOTIFICATION_TO, deviceToken)
+                            pushData.put(Constants.NOTIFICATION_DATA, data)
+                            val push = FCMSender.Builder()
+                                .serverKey(Constants.FIREBASE_KEY)
+                                .setData(pushData)
+                                .toTokenOrTopic(deviceToken)
+                                .responseListener(object : FCMSender.ResponseListener {
+                                    override fun onFailure(errorCode: Int, message: String) {
+                                        Toast.makeText(
+                                            context,
+                                            "notification sent Failed to $deviceToken",
+                                            Toast.LENGTH_LONG
+                                        ).show()
+                                    }
 
+                                    override fun onSuccess(response: String) {
+                                        Toast.makeText(
+                                            context,
+                                            "notification sent Successfully to $deviceToken",
+                                            Toast.LENGTH_LONG
+                                        ).show()
+                                    }
+                                }).build()
+                            push.sendPush(context)
+                        } catch (e: Exception) {
+                            e.printStackTrace()
                         }
-                        val requestQueue: RequestQueue = Volley.newRequestQueue(context)
-                        requestQueue.add(jsonObjectRequest)
                     } catch (e: JSONException) {
                         Toast.makeText(
                             context,

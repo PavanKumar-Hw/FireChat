@@ -6,7 +6,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.view.ActionMode
 import androidx.recyclerview.widget.RecyclerView
-import com.example.firechat.NodeNames
+import com.example.firechat.common.NodeNames
 import com.example.firechat.R
 import com.example.firechat.chat.data.models.MessageModel
 import com.example.firechat.common.Constants

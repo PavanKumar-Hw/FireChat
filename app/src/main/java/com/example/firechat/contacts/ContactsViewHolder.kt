@@ -1,6 +1,7 @@
 package com.example.firechat.contacts
 
 import androidx.recyclerview.widget.RecyclerView
+import com.example.firechat.contacts.data.models.ContactModel
 import com.example.firechat.databinding.ContactViewBinding
 
 class ContactsViewHolder(val binding: ContactViewBinding) :
@@ -12,7 +13,7 @@ class ContactsViewHolder(val binding: ContactViewBinding) :
     ) {
 
         binding.apply {
-            tvUserName.text = contactModel.userName
+            tvUserName.text = contactModel.contactName
             root.setOnClickListener {
                 clickFunction?.invoke(contactModel, adapterPosition)
             }

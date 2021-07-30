@@ -13,15 +13,12 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.widget.doAfterTextChanged
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.example.firechat.NodeNames
+import com.example.firechat.common.NodeNames
 import com.example.firechat.R
 import com.example.firechat.chat.data.models.MessageModel
 import com.example.firechat.chat.presentation.adapters.MessagesAdapter
 import com.example.firechat.chat.presentation.viewmodels.ChatViewModel
 import com.example.firechat.common.*
-import com.example.firechat.common.Constants.Companion.STATUS_OFFLINE
-import com.example.firechat.common.Constants.Companion.STATUS_ONLINE
-import com.example.firechat.common.Constants.Companion.STATUS_TYPING
 import com.example.firechat.common.Constants.Companion.currentUserId
 import com.example.firechat.databinding.ActivityChatBinding
 import com.example.firechat.databinding.CustomActionBarBinding
@@ -30,7 +27,6 @@ import com.google.android.gms.location.LocationServices
 import com.google.firebase.database.*
 import dagger.hilt.android.AndroidEntryPoint
 import java.util.*
-import kotlin.collections.ArrayList
 
 @AndroidEntryPoint
 class ChatActivity : AppCompatActivity(), View.OnClickListener {
@@ -95,6 +91,7 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener {
         }
 
         initRecyclerView()
+        initCallBackFunctions()
         loadMessages()
 
         if (intent.hasExtra(Extras.MESSAGE) &&
@@ -134,6 +131,29 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener {
         viewModel.observeSenderTypingStatus(chatUserRef)
         viewModel.typingStatus.observe(this) {
             toolBarBinding.tvUserStatus.text = it
+        }
+    }
+
+    private fun initCallBackFunctions() {
+        messagesAdapter.addAcceptListener { messageModel, i ->
+            Toast.makeText(
+                this,
+                "Accepted ${messageModel.location?.requestingUserLoc}",
+                Toast.LENGTH_LONG
+            ).show()
+            if (Util.connectionAvailable(this)) {
+                checkPermission(this, Constants.ACCEPT_LOC_REQ, messageModel)
+            }
+        }
+        messagesAdapter.addRejectListener { _, _ ->
+            Toast.makeText(this, "Rejected", Toast.LENGTH_LONG).show()
+        }
+        messagesAdapter.addCancelListener { messageModel, _ ->
+            Toast.makeText(
+                this,
+                "Cancelled ${messageModel.location?.requestingUserLoc}",
+                Toast.LENGTH_LONG
+            ).show()
         }
     }
 

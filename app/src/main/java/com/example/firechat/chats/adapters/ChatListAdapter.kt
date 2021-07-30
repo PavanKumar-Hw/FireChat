@@ -1,4 +1,4 @@
-package com.example.firechat.adapters
+package com.example.firechat.chats.adapters
 
 import android.content.Context
 import android.content.Intent
@@ -6,12 +6,12 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import com.example.firechat.adapters.ChatListAdapter.ChatListViewHolder
+import com.example.firechat.chats.adapters.ChatListAdapter.ChatListViewHolder
 import com.example.firechat.chat.presentation.activities.ChatActivity
 import com.example.firechat.common.Extras
 import com.example.firechat.common.Util.getTimeAgo
 import com.example.firechat.databinding.ChatListLayoutBinding
-import com.example.firechat.models.ChatListModel
+import com.example.firechat.chats.data.models.ChatListModel
 
 class ChatListAdapter(
     private val context: Context,

@@ -3,7 +3,7 @@ package com.example.firechat.common
 class Constants {
     companion object {
 
-        const val SEND_LOC_REQ: Int = 1
+        const val SEND_LOC_REQ: Int = 0
         const val ACCEPT_LOC_REQ: Int = 1
 
         const val SENDER_ID: String = "282333194999"
@@ -32,7 +32,7 @@ class Constants {
         const val NOTIFICATION_MESSAGE = "message"
         const val NOTIFICATION_FROM = "from"
 
-        const val currentUserId = "jwUOcUWEnJWgiGELCqOcQxNga5Y2"
+        const val currentUserId = "6bOtNlitcKTDxLxrEjdAiyYpM513"
 
         const val NOTIFICATION_TO = "to"
         const val NOTIFICATION_DATA = "data"

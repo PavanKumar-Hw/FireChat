@@ -7,10 +7,11 @@ class NodeNames {
         const val MESSAGES = "Messages"
         const val TOKENS = "Tokens"
 
-        const val NAME = "name"
+        const val USER_NAME = "userName"
+        const val USER_ID = "userId"
         const val EMAIL = "email"
         const val ONLINE = "online"
-        const val PHOTO = "photo"
+        const val PHOTO_PATH = "photoPath"
 
         const val TIME_STAMP = "timestamp"
         const val MESSAGE_ID = "messageId"
@@ -36,5 +37,6 @@ class NodeNames {
 
         const val LAST_MESSAGE_TIME = "last_message_time"
         const val TYPING = "typing"
+        const val LAST_SEEN = "lastSeen"
     }
 }

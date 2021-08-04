@@ -155,6 +155,7 @@ class LocationRequestViewHolder(
             clRequestLoc.setOnLongClickListener(View.OnLongClickListener {
                 if (actionMode != null) return@OnLongClickListener false
                 MessagesAdapter.selectedView = clRequestLoc
+                MessagesAdapter.selectedViewPosition = adapterPosition
                 actionMode =
                     (context as AppCompatActivity).startSupportActionMode(actionModeCallBack)
                 clRequestLoc.setBackgroundColor(

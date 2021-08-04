@@ -199,15 +199,15 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener {
     override fun onClick(view: View) {
         when (view.id) {
             R.id.ivSend -> {
-                if (Util.connectionAvailable(this)) {
-                    viewModel.createMessageBody(
-                        binding.etMessage.text.toString().trim { it <= ' ' },
-                        Constants.MESSAGE_TYPE_TEXT,
-                        false, lastKnownLocation, this, false, null
-                    )
-                } else {
-                    Toast.makeText(this, R.string.no_internet, Toast.LENGTH_SHORT).show()
-                }
+//                if (Util.connectionAvailable(this)) {
+                viewModel.createMessageBody(
+                    binding.etMessage.text.toString().trim { it <= ' ' },
+                    Constants.MESSAGE_TYPE_TEXT,
+                    false, lastKnownLocation, this, false, null
+                )
+//                } else {
+//                    Toast.makeText(this, R.string.no_internet, Toast.LENGTH_SHORT).show()
+//                }
             }
             R.id.ivLocation -> {
                 if (Util.connectionAvailable(this)) {
@@ -219,7 +219,7 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener {
         }
     }
 
-    fun deleteMessage(messageId: String, messageType: String) {
+    fun deleteMessage(messageId: String, messageType: String, selectedViewPosition: Int) {
         val databaseReference = mRootRef.child(NodeNames.MESSAGES)
             .child(currentUserId).child(viewModel.chatUserId).child(messageId)
         databaseReference.removeValue().addOnCompleteListener { task ->
@@ -248,6 +248,7 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener {
                 ).show()
             }
         }
+        messagesAdapter.notifyItemRemoved(selectedViewPosition)
     }
 
     private fun checkPermission(context: Context, type: Int, messageModel: MessageModel?) {
@@ -300,7 +301,21 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener {
 
     override fun onBackPressed() {
         mRootRef.child(NodeNames.CHATS).child(currentUserId).child(viewModel.chatUserId)
-            .child(NodeNames.UNREAD_COUNT).setValue(0)
+            .addListenerForSingleValueEvent(
+                object : ValueEventListener {
+                    override fun onDataChange(snapshot: DataSnapshot) {
+                        if (snapshot.exists()) {
+                            mRootRef.child(NodeNames.CHATS).child(currentUserId)
+                                .child(viewModel.chatUserId)
+                                .child(NodeNames.UNREAD_COUNT).setValue(0)
+                        }
+                    }
+
+                    override fun onCancelled(error: DatabaseError) {
+                        TODO("Not yet implemented")
+                    }
+
+                })
         super.onBackPressed()
     }
 }

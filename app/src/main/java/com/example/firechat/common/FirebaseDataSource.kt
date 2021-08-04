@@ -34,12 +34,46 @@ class FirebaseReferenceChildObserver @Inject constructor() {
         reference.addChildEventListener(valueEventListener)
         this.valueEventListener = valueEventListener
         this.dbRef = reference
+        this.dbRef?.keepSynced(true)
     }
 
     fun clear() {
         valueEventListener?.let { dbRef?.removeEventListener(it) }
         isObserving = false
         valueEventListener = null
+        this.dbRef?.keepSynced(false)
+        dbRef = null
+    }
+
+    fun isObserving(): Boolean {
+        return isObserving
+    }
+}
+
+
+@Singleton
+class FirebaseReferenceChatsChildObserver @Inject constructor() {
+    private var valueEventListener: ChildEventListener? = null
+    private var dbRef: DatabaseReference? = null
+    private var isObserving: Boolean = false
+    private lateinit var query: Query
+
+    fun start(valueEventListener: ChildEventListener, reference: DatabaseReference) {
+        isObserving = true
+        query = reference.orderByChild(NodeNames.TIME_STAMP)
+        query.addChildEventListener(valueEventListener)
+        this.valueEventListener = valueEventListener
+        this.dbRef = reference
+        this.dbRef?.keepSynced(true)
+    }
+
+    fun clear() {
+        if (::query.isInitialized) {
+            valueEventListener?.let { query.removeEventListener(it) }
+        }
+        isObserving = false
+        valueEventListener = null
+        this.dbRef?.keepSynced(false)
         dbRef = null
     }
 
@@ -49,11 +83,7 @@ class FirebaseReferenceChildObserver @Inject constructor() {
 }
 
 @Singleton
-class FirebaseDataSource @Inject constructor() {
-
-    companion object {
-        val dbInstance = FirebaseDatabase.getInstance()
-    }
+class FirebaseDataSource @Inject constructor(val dbInstance: FirebaseDatabase) {
 
     //region Private
 
@@ -79,6 +109,27 @@ class FirebaseDataSource @Inject constructor() {
             override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {}
 
             override fun onChildRemoved(snapshot: DataSnapshot) {}
+        })
+    }
+
+    private fun attachChatsChildListenerToBlock(b: ((DataSnapshot, Boolean?, String) -> Unit)):
+            ChildEventListener {
+        return (object : ChildEventListener {
+            override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
+                b.invoke(snapshot, true, snapshot.key!!)
+            }
+
+            override fun onCancelled(error: DatabaseError) {}
+
+            override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {}
+
+            override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {
+                b.invoke(snapshot, false, snapshot.key!!)
+            }
+
+            override fun onChildRemoved(snapshot: DataSnapshot) {
+                b.invoke(snapshot, null, snapshot.key!!)
+            }
         })
     }
 
@@ -145,6 +196,15 @@ class FirebaseDataSource @Inject constructor() {
     ) {
         val listener = attachChildListenerToBlock(resultClassName, b)
         refObs.start(listener, refToPath(messagesID))
+    }
+
+    fun attachChatsObserver(
+        path: String,
+        refObs: FirebaseReferenceChatsChildObserver,
+        b: ((DataSnapshot, Boolean?, String) -> Unit)
+    ) {
+        val listener = attachChatsChildListenerToBlock(b)
+        refObs.start(listener, refToPath(path))
     }
 
     fun sendMessageToUser(messageUserMap: HashMap<String, Any>, b: (String?) -> Unit) {

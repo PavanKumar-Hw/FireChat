@@ -16,14 +16,13 @@
 
         <com.mikhaellopez.circularimageview.CircularImageView
             android:id="@+id/ivProfile"
-            android:layout_width="75dp"
-            android:layout_height="75dp"
-            android:src="@drawable/ic_launcher_background"/>
+            android:layout_width="@dimen/_60sdp"
+            android:layout_height="@dimen/_60sdp"
+            android:src="@drawable/ic_launcher_background" />
 
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="8dp"
             android:layout_marginStart="8dp"
             android:layout_marginTop="8dp"
             android:layout_weight="1"
@@ -43,6 +42,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:maxLines="1"
+                android:singleLine="true"
                 android:textAppearance="@style/TextAppearance.AppCompat.Small"
                 tools:text="Last Message" />
         </LinearLayout>
@@ -50,22 +50,20 @@
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center|end"
-            android:layout_marginRight="8dp"
+            android:layout_gravity="center|center_vertical"
             android:layout_marginEnd="8dp"
             android:gravity="center"
             android:orientation="vertical">
 
             <TextView
                 android:id="@+id/tvUnreadCount"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="@dimen/_27sdp"
+                android:layout_height="@dimen/_27sdp"
                 android:background="@drawable/red_circle"
                 android:gravity="center"
-                android:padding="6dp"
-                android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+                android:textAppearance="@style/TextAppearance.AppCompat.Small"
                 android:textColor="@android:color/white"
-                tools:text="60" />
+                tools:text="6" />
 
             <TextView
                 android:id="@+id/tvLastMessageTime"
@@ -76,15 +74,14 @@
         </LinearLayout>
     </LinearLayout>
 
-
     <View
         android:layout_width="match_parent"
-        android:layout_height="0.1dp"
+        android:layout_height="0.5dp"
+        android:layout_marginTop="7dp"
         android:background="@color/gray"
-        android:layout_marginTop="8dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/llChatList"/>
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/llChatList" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

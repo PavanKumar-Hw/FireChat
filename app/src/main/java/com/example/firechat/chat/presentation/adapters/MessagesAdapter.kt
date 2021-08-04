@@ -21,6 +21,7 @@ class MessagesAdapter(private val context: Context) :
 
     companion object {
         var selectedView: ConstraintLayout? = null
+        var selectedViewPosition: Int = -1
     }
 
     private var acceptFunction: ((item: MessageModel, pos: Int) -> Unit)? = null
@@ -105,15 +106,15 @@ class MessagesAdapter(private val context: Context) :
         }
     }
 
-    var actionModeCallBack: ActionMode.Callback = object : ActionMode.Callback {
+    private var actionModeCallBack: ActionMode.Callback = object : ActionMode.Callback {
         override fun onCreateActionMode(actionMode: ActionMode, menu: Menu): Boolean {
             val inflater = actionMode.menuInflater
             inflater.inflate(R.menu.menu_chat_options, menu)
-            val selectedMessageType = selectedView!!.getTag(R.id.TAG_MESSAGE_TYPE).toString()
+            /*val selectedMessageType = selectedView!!.getTag(R.id.TAG_MESSAGE_TYPE).toString()
             if (selectedMessageType == Constants.MESSAGE_TYPE_TEXT) {
                 val itemDownload = menu.findItem(R.id.mnuDownload)
                 itemDownload.isVisible = false
-            }
+            }*/
             return true
         }
 
@@ -125,26 +126,16 @@ class MessagesAdapter(private val context: Context) :
             val selectedMessageId = selectedView!!.getTag(R.id.TAG_MESSAGE_ID).toString()
             val selectedMessage = selectedView!!.getTag(R.id.TAG_MESSAGE).toString()
             val selectedMessageType = selectedView!!.getTag(R.id.TAG_MESSAGE_TYPE).toString()
-            val itemId = menuItem.itemId
-            when (itemId) {
+            when (menuItem.itemId) {
                 R.id.mnuDelete -> {
                     if (context is ChatActivity) {
-                        (context as ChatActivity).deleteMessage(
+                        context.deleteMessage(
                             selectedMessageId,
-                            selectedMessageType
+                            selectedMessageType,
+                            selectedViewPosition
                         )
                     }
                     actionMode.finish()
-                }
-                R.id.mnuDownload -> {
-                    /*if (context is ChatActivity) {
-                        (context as ChatActivity).downloadFile(
-                            selectedMessageId,
-                            selectedMessageType,
-                            false
-                        )
-                    }
-                    actionMode.finish()*/
                 }
                 R.id.mnuShare -> {
                     if (selectedMessageType == Constants.MESSAGE_TYPE_TEXT) {
@@ -164,23 +155,13 @@ class MessagesAdapter(private val context: Context) :
                     }
                     actionMode.finish()
                 }
-                R.id.mnuForward -> {
-                    if (context is ChatActivity) {
-                        /*(context as ChatActivity).forwardMessage(
-                            selectedMessageId,
-                            selectedMessage,
-                            selectedMessageType
-                        )*/
-                    }
-                    actionMode.finish()
-                }
             }
             return false
         }
 
         override fun onDestroyActionMode(actionMode: ActionMode) {
-            var actionMode: ActionMode? = actionMode
-            actionMode = null
+            var actionModeTemp: ActionMode? = actionMode
+            actionModeTemp = null
             selectedView!!.setBackgroundColor(context.resources.getColor(R.color.chat_background))
         }
     }

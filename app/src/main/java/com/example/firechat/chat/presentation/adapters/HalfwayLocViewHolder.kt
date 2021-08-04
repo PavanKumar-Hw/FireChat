@@ -93,11 +93,10 @@ class HalfwayLocViewHolder(
             clLocShare.setOnLongClickListener(View.OnLongClickListener {
                 if (actionMode != null) return@OnLongClickListener false
                 MessagesAdapter.selectedView = clLocShare
+                MessagesAdapter.selectedViewPosition = adapterPosition
                 actionMode =
                     (context as AppCompatActivity).startSupportActionMode(actionModeCallBack)
-                clLocShare.setBackgroundColor(
-                    context.getResources().getColor(R.color.colorAccent)
-                )
+                clLocShare.setBackgroundColor(context.getResources().getColor(R.color.colorAccent))
                 true
             })
         }

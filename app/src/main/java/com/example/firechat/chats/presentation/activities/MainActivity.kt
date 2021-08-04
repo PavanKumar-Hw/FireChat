@@ -3,25 +3,28 @@ package com.example.firechat.chats.presentation.activities
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import com.example.firechat.chats.adapters.ChatListAdapter
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.example.firechat.chat.presentation.adapters.MessagesAdapter
+import com.example.firechat.chats.presentation.adapters.ChatListAdapter
 import com.example.firechat.common.Constants
 import com.example.firechat.common.NodeNames
 import com.example.firechat.contacts.presentation.activities.ContactsActivity
 import com.example.firechat.databinding.ActivityMainBinding
 import com.example.firechat.chats.data.models.ChatListModel
+import com.example.firechat.chats.presentation.viewmodels.ChatsViewModel
 import com.google.firebase.database.*
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var database: DatabaseReference
-    private lateinit var query: Query
-    private var childEventListener: ChildEventListener? = null
     private lateinit var binding: ActivityMainBinding
-
     private lateinit var chatListAdapter: ChatListAdapter
-    private var chatListModelList: ArrayList<ChatListModel> = ArrayList()
-    private val userIds: ArrayList<String> = ArrayList()
+
+    private val chatsViewModel: ChatsViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,13 +36,14 @@ class MainActivity : AppCompatActivity() {
 
         databaseReferenceUsers.child(NodeNames.ONLINE).setValue(true)
         databaseReferenceUsers.child(NodeNames.ONLINE).onDisconnect().setValue(false)
-
-        initDatabase()
+        databaseReferenceUsers.child(NodeNames.LAST_SEEN).onDisconnect()
+            .setValue(ServerValue.TIMESTAMP)
         initViews()
+        loadChats()
     }
 
     private fun initViews() {
-        chatListAdapter = ChatListAdapter(this, chatListModelList)
+        chatListAdapter = ChatListAdapter(this)
         binding.rcvChats.adapter = chatListAdapter
         binding.fabSendNewMsg.setOnClickListener {
             val intent = Intent(this, ContactsActivity::class.java)
@@ -47,67 +51,15 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun initDatabase() {
-        database = FirebaseDatabase.getInstance().reference.child("Chats")
-            .child(Constants.currentUserId)
-        query = database.orderByChild("timeStamp")
-
-        childEventListener = object : ChildEventListener {
-            override fun onChildAdded(dataSnapshot: DataSnapshot, s: String?) {
-                updateList(dataSnapshot, true, dataSnapshot.key!!)
-            }
-
-            override fun onChildChanged(dataSnapshot: DataSnapshot, s: String?) {
-                updateList(dataSnapshot, false, dataSnapshot.key!!)
-            }
-
-            override fun onChildRemoved(dataSnapshot: DataSnapshot) {
-                removeChat(dataSnapshot)
-            }
-
-            override fun onChildMoved(dataSnapshot: DataSnapshot, s: String?) {}
-            override fun onCancelled(databaseError: DatabaseError) {}
-        }
-        query.addChildEventListener(childEventListener as ChildEventListener)
+    private fun loadChats() {
+        chatsViewModel.loadChats("${NodeNames.CHATS}/${Constants.currentUserId}")
+        observeChats()
     }
 
-    private fun removeChat(dataSnapshot: DataSnapshot) {
-        val indexOfClickedUser: Int = userIds.indexOf(dataSnapshot.key!!)
-        chatListModelList.removeAt(indexOfClickedUser)
-        userIds.removeAt(indexOfClickedUser)
-        chatListAdapter.notifyDataSetChanged()
-        Toast.makeText(this@MainActivity, "Chat Deleted", Toast.LENGTH_LONG).show()
-    }
-
-    private fun updateList(dataSnapshot: DataSnapshot, isNew: Boolean, userId: String) {
-        val lastMessage: String =
-            if (dataSnapshot.child(NodeNames.LAST_MESSAGE).value != null) dataSnapshot.child(
-                NodeNames.LAST_MESSAGE
-            ).value.toString() else ""
-        val lastMessageTime: String =
-            if (dataSnapshot.child(NodeNames.LAST_MESSAGE_TIME).value != null) dataSnapshot.child(
-                NodeNames.LAST_MESSAGE_TIME
-            ).value.toString() else ""
-        val unreadCount: String =
-            if (dataSnapshot.child(NodeNames.UNREAD_COUNT).value == null) "0" else dataSnapshot.child(
-                NodeNames.UNREAD_COUNT
-            ).value.toString()
-
-
-        val chatListModel = userId?.let {
-            ChatListModel(
-                it, "", "", unreadCount, lastMessage, lastMessageTime
-            )
+    private fun observeChats() {
+        chatsViewModel.messageList.observe(this) {
+            chatListAdapter.submitList(it)
         }
-        if (isNew) {
-            chatListModelList.add(chatListModel)
-            userIds.add(userId)
-        } else {
-            val indexOfClickedUser: Int = userIds.indexOf(userId)
-            chatListModelList[indexOfClickedUser] = chatListModel
-        }
-        chatListAdapter.notifyDataSetChanged()
-
     }
 
 }

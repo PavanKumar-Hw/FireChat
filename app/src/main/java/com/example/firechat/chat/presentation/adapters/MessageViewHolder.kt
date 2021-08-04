@@ -26,9 +26,13 @@ class MessageViewHolder(
         val currentUserId: String = Constants.currentUserId
         val fromUserId = message.messageFrom
         val sfd = SimpleDateFormat("dd-MM-yyyy HH:mm")
-        val dateTime = sfd.format(Date(message.messageTime as Long))
-        val splitString = dateTime.split(" ").toTypedArray()
-        val messageTime = splitString[1]
+        val messageTime = try {
+            val dateTime = sfd.format(Date(message.messageTime as Long))
+            val splitString = dateTime.split(" ").toTypedArray()
+            splitString[1]
+        } catch (e: Exception) {
+            ""
+        }
 
         binding.apply {
             if (fromUserId == currentUserId) {
@@ -88,6 +92,7 @@ class MessageViewHolder(
             clMessage.setOnLongClickListener(View.OnLongClickListener {
                 if (actionMode != null) return@OnLongClickListener false
                 MessagesAdapter.selectedView = clMessage
+                MessagesAdapter.selectedViewPosition = adapterPosition
                 actionMode =
                     (context as AppCompatActivity).startSupportActionMode(actionModeCallBack)
                 clMessage.setBackgroundColor(

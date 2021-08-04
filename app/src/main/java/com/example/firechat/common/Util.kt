@@ -1,6 +1,7 @@
 package com.example.firechat.common
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
 import android.net.ConnectivityManager
@@ -8,14 +9,18 @@ import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import com.example.firechat.R
 import com.example.firechat.chat.data.models.MessageModel
+import com.example.firechat.chats.data.models.ChatListModel
 import com.example.firechat.fcmPushNotification.FCMSender
 import com.google.firebase.database.*
 import com.google.gson.Gson
 import org.json.JSONException
 import org.json.JSONObject
+import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.collections.HashMap
 
 object Util {
+
     fun connectionAvailable(context: Context): Boolean {
         val connectivityManager =
             context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
@@ -56,16 +61,21 @@ object Util {
 
         chatRef.addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(dataSnapshot: DataSnapshot) {
-                var currentCount = "0"
+
+                var currentCount = 0
                 if (dataSnapshot.child(NodeNames.UNREAD_COUNT).value != null) currentCount =
-                    dataSnapshot.child(NodeNames.UNREAD_COUNT).value.toString()
-                val chatMap: HashMap<String, Any> = HashMap<String, Any>()
-                chatMap[NodeNames.TIME_STAMP] = ServerValue.TIMESTAMP
-                chatMap[NodeNames.UNREAD_COUNT] = Integer.valueOf(currentCount) + 1
-                chatMap[NodeNames.LAST_MESSAGE] = lastMessage ?: ""
-                chatMap[NodeNames.LAST_MESSAGE_TIME] = ServerValue.TIMESTAMP
-                val chatUserMap: HashMap<String, Any> = HashMap<String, Any>()
-                chatUserMap[NodeNames.CHATS + "/" + chatUserId + "/" + currentUserId] = chatMap
+                    Integer.valueOf(dataSnapshot.child(NodeNames.UNREAD_COUNT).value.toString())
+
+                val chatUserMap: HashMap<String, Any> = hashMapOf(
+                    NodeNames.CHATS + "/" + chatUserId + "/" + currentUserId to ChatListModel(
+                        userId = currentUserId,
+                        unreadCount = currentCount + 1,
+                        lastMessage = lastMessage ?: "",
+                        lastMessageTime = ServerValue.TIMESTAMP,
+                        timeStamp = ServerValue.TIMESTAMP
+                    )
+                )
+
                 rootRef.updateChildren(
                     chatUserMap
                 ) { databaseError, _ ->
@@ -89,15 +99,19 @@ object Util {
 
         currentUserRef.addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(dataSnapshot: DataSnapshot) {
-                val chatMap: HashMap<String, Any> = HashMap<String, Any>()
-                chatMap[NodeNames.TIME_STAMP] = ServerValue.TIMESTAMP
-                chatMap[NodeNames.LAST_MESSAGE] = lastMessage ?: ""
-                chatMap[NodeNames.LAST_MESSAGE_TIME] = ServerValue.TIMESTAMP
-                val chatUserMap: HashMap<String, Any> = HashMap<String, Any>()
-                chatUserMap[NodeNames.CHATS + "/" + currentUserId + "/" + chatUserId] = chatMap
-                rootRef.updateChildren(
-                    chatUserMap
-                ) { databaseError, _ ->
+                var currentCount = 0
+                if (dataSnapshot.child(NodeNames.UNREAD_COUNT).value != null) currentCount =
+                    dataSnapshot.child(NodeNames.UNREAD_COUNT).value.toString().toInt()
+                val chatUserMap: HashMap<String, Any> = hashMapOf(
+                    NodeNames.CHATS + "/" + currentUserId + "/" + chatUserId to ChatListModel(
+                        userId = chatUserId,
+                        unreadCount = currentCount,
+                        lastMessage = lastMessage ?: "",
+                        lastMessageTime = ServerValue.TIMESTAMP,
+                        timeStamp = ServerValue.TIMESTAMP
+                    )
+                )
+                rootRef.updateChildren(chatUserMap) { databaseError, _ ->
                     if (databaseError != null)
                         Toast.makeText(
                             context,
@@ -216,6 +230,50 @@ object Util {
             }
             else -> {
                 diff.div(dayMillis).toString() + " days ago"
+            }
+        }
+    }
+
+    @SuppressLint("SimpleDateFormat")
+    fun getLastSeen(lastSeen: Long): String {
+        val currentTime = System.currentTimeMillis()
+        val dayCount = (currentTime - lastSeen) / (24 * 60 * 60 * 1000)
+        val calender = Calendar.getInstance()
+        calender.timeInMillis = lastSeen
+        val date = calender.time
+        return when {
+            dayCount > 1L -> {
+                //DD/MM/YYYY format
+                "last seen ${SimpleDateFormat("dd MMM yyyy").format(date)}"
+            }
+            dayCount == 1L -> {
+                "last seen yesterday ${SimpleDateFormat("hh:mm aa").format(date)}"
+            }
+            else -> {
+                //hh:mm aa
+                "last seen today at ${SimpleDateFormat("hh:mm aa").format(date)}"
+            }
+        }
+    }
+
+    @SuppressLint("SimpleDateFormat")
+    fun getTime(sentTime: Long): String {
+        val currentTime = System.currentTimeMillis()
+        val dayCount = (currentTime - sentTime) / (24 * 60 * 60 * 1000)
+        val calender = Calendar.getInstance()
+        calender.timeInMillis = sentTime
+        val date = calender.time
+        return when {
+            dayCount > 1L -> {
+                //DD/MM/YYYY format
+                SimpleDateFormat("dd/MM/yyyy").format(date)
+            }
+            dayCount == 1L -> {
+                "Yesterday"
+            }
+            else -> {
+                //hh:mm aa
+                SimpleDateFormat("hh:mm aa").format(date)
             }
         }
     }

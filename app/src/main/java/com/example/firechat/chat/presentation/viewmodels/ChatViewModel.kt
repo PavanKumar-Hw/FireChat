@@ -13,7 +13,7 @@ import com.example.firechat.chat.data.models.MessageModel
 import com.example.firechat.chat.data.models.RequestOptions
 import com.example.firechat.chat.domain.ChatUseCase
 import com.example.firechat.common.*
-import com.google.firebase.database.ServerValue
+import com.google.firebase.database.*
 import com.google.firebase.database.core.ServerValues
 import com.karumi.dexter.Dexter
 import com.karumi.dexter.MultiplePermissionsReport
@@ -27,7 +27,8 @@ import javax.inject.Inject
 @HiltViewModel
 class ChatViewModel @Inject constructor(
     private val chatUseCase: ChatUseCase,
-    private val fbRefMessagesChildObserver: FirebaseReferenceChildObserver
+    private val fbRefMessagesChildObserver: FirebaseReferenceChildObserver,
+    private val dbInstance: FirebaseDatabase
 ) : ViewModel() {
 
     @Inject
@@ -130,11 +131,10 @@ class ChatViewModel @Inject constructor(
     }
 
     private fun generateMessageId(): String? {
-        val userMessagePush =
-            FirebaseDataSource.dbInstance.reference.child(NodeNames.MESSAGES)
-                .child(Constants.currentUserId)
-                .child(chatUserId)
-                .push()
+        val userMessagePush = dbInstance.reference.child(NodeNames.MESSAGES)
+            .child(Constants.currentUserId)
+            .child(chatUserId)
+            .push()
         return userMessagePush.key
     }
 
@@ -231,7 +231,20 @@ class ChatViewModel @Inject constructor(
     }
 
     fun updateTypingStatus(refPath: String, status: String) {
-        chatUseCase.updateUserTypingStatus(refPath, status)
+        dbInstance.reference.child(NodeNames.CHATS).child(Constants.currentUserId).child(chatUserId)
+            .addListenerForSingleValueEvent(
+                object : ValueEventListener {
+                    override fun onDataChange(snapshot: DataSnapshot) {
+                        if (snapshot.exists()) {
+                            chatUseCase.updateUserTypingStatus(refPath, status)
+                        }
+                    }
+
+                    override fun onCancelled(error: DatabaseError) {
+                        TODO("Not yet implemented")
+                    }
+
+                })
     }
 
     fun observeSenderTypingStatus(refPath: String) {
@@ -241,7 +254,7 @@ class ChatViewModel @Inject constructor(
                 if (isTyping == Constants.TYPING_STARTED)
                     typingStatus.value = Constants.STATUS_TYPING
                 else
-                    typingStatus.value = Constants.STATUS_ONLINE
+                    typingStatus.value = activeStatus.value
             } else {
                 typingStatus.value = activeStatus.value
             }
@@ -254,10 +267,11 @@ class ChatViewModel @Inject constructor(
                 var statusTemp = ""
                 if (snapShot?.child(NodeNames.ONLINE)?.value != null)
                     statusTemp = snapShot.child(NodeNames.ONLINE).value.toString()
-                if (statusTemp == "true")
+                if (statusTemp == "true") {
                     activeStatus.value = Constants.STATUS_ONLINE
-                else
+                } else {
                     activeStatus.value = Constants.STATUS_OFFLINE
+                }
             } else {
                 activeStatus.value = Constants.STATUS_OFFLINE
             }
